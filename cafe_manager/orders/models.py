@@ -18,5 +18,3 @@ class Order(models.Model):
     status = models.CharField(
         max_length=10, choices=STATUS_CHOICES, default="pending"
     )
-    def __str__(self):
-        return f"Order {self.pk} - Table {self.table_number}"

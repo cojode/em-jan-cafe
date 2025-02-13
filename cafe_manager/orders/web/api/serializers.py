@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from orders.models import Order
 
 
 class ItemSerializer(serializers.Serializer):
@@ -12,3 +13,9 @@ class ItemSerializer(serializers.Serializer):
 class CreateOrderSerializer(serializers.Serializer):
     table_number = serializers.IntegerField(min_value=1)
     items = serializers.ListField(child=ItemSerializer(), allow_empty=False)
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ["id", "table_number", "total_price", "items", "status"]
