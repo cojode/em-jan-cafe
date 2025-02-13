@@ -1,8 +1,6 @@
-from . import web
-from django.urls import path
-
+from django.urls import path, include
 
 urlpatterns = [
-    path("api/home", web.api.home, name="api"),
-    path("home", web.views.home, name="views"),
+    path("api/", include("orders.web.api.urls")),
+    path("", include("orders.web.interface.urls")),
 ]
