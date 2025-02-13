@@ -3,8 +3,8 @@ from . import views
 
 urlpatterns = [
     path(
-        "ping/",
-        views.ping,
-        name="ping",
+        "create-order",
+        views.OrderCreateView.as_view(),
+        name="create-order",
     ),
 ]
