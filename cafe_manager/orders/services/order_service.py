@@ -1,0 +1,19 @@
+class OrderService:
+
+    @staticmethod
+    def create(): ...
+
+    @staticmethod
+    def remove(): ...
+
+    @staticmethod
+    def search(): ...
+
+    @staticmethod
+    def show_all(): ...
+
+    @staticmethod
+    def modify_status(): ...
+
+    @staticmethod
+    def calculate_profit(): ...
