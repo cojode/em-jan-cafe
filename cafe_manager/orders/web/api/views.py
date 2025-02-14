@@ -29,11 +29,13 @@ class OrderListView(APIView):
     @handle_service_error
     def get(self, _):
         orders = OrderService.show_all()
-        return successful_response()
+        serialized_orders = [OrderSerializer(order).data for order in orders]
+        return Response(
+            {"count": len(serialized_orders), "items": serialized_orders}
+        )
 
 
 class OrderCreateView(APIView):
-
     @handle_service_error
     def post(self, request):
         serializer = CreateOrderSerializer(data=request.data)
@@ -85,3 +87,9 @@ class OrderIdStatusView(APIView):
         )
 
         return Response(OrderSerializer(order).data)
+
+
+class TotalProfitView(APIView):
+    @handle_service_error
+    def get(self, _):
+        return Response({"total_profit": OrderService.calculate_profit()})

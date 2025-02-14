@@ -1,4 +1,8 @@
 from orders.models import Order
+from django.db.models import Sum
+import decimal
+
+from typing import List, Dict
 
 
 class OrderServiceError(Exception):
@@ -6,7 +10,7 @@ class OrderServiceError(Exception):
 
 class OrderService:
     @staticmethod
-    def create(table_number: int, items: list) -> Order:
+    def create(table_number: int, items: List[Dict[str, float]]) -> Order:
         total_price = sum(item["cost"] * item["amount"] for item in items)
         jsonable_items = [
             {k: str(v) for k, v in item.items()} for item in items
@@ -15,12 +19,11 @@ class OrderService:
             table_number=table_number,
             items=jsonable_items,
             total_price=total_price,
-            # ? by default: status="pending",
         )
         return new_order
 
     @staticmethod
-    def show_all():
+    def show_all() -> List[Dict]:
         return Order.objects.all().values()
 
     @staticmethod
@@ -47,7 +50,7 @@ class OrderService:
         return OrderService._get_and_verify_existance(id=order_id)
 
     @staticmethod
-    def search_by_table_number(order_table_number: int):
+    def search_by_table_number(order_table_number: int) -> List[Order]:
         return Order.objects.filter(table_number=order_table_number)
 
     @staticmethod
@@ -56,11 +59,17 @@ class OrderService:
         return order.delete()[0]
 
     @staticmethod
-    def modify_status_by_id(order_id: int, new_status: str) -> int:
+    def modify_status_by_id(order_id: int, new_status: str) -> Order:
         order = OrderService._get_and_verify_existance(id=order_id)
         order.status = new_status
         order.save(update_fields=["status"])
         return order
 
     @staticmethod
-    def calculate_profit(): ...
+    def calculate_profit() -> decimal.Decimal:
+        paid_status = Order.STATUS_PAID
+        return (
+            Order.objects.filter(status=paid_status).aggregate(
+                total_profit=Sum("total_price")
+            )["total_profit"]
+        ) or decimal.Decimal(0)

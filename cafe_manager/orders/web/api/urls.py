@@ -19,4 +19,9 @@ urlpatterns = [
         views.OrderIdStatusView.as_view(),
         name="order status access by id",
     ),
+    path(
+        "total-profit",
+        views.TotalProfitView.as_view(),
+        name="calculated total profit",
+    ),
 ]
