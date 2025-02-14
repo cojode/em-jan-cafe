@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from orders.services.order_service import OrderService, OrderServiceError
+from orders.services import OrderService, OrderServiceError
 from .serializers import (
     CreateOrderSerializer,
     OrderSerializer,

@@ -5,7 +5,7 @@ from functools import wraps
 def protective_call(
     error_handler: Callable[[Exception], any], *errors_to_except: Exception
 ):
-    """Simple wrapper to hide primitive try-except constructions"""
+    """Simple wrapper to hide primitive try-except constructions."""
 
     def decorator(func: Callable):
         @wraps(func)
