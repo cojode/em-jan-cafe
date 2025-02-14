@@ -2,11 +2,15 @@ from orders.models import Order
 from django.db.models import Sum
 import decimal
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 class OrderServiceError(Exception):
     """Common error for all order service errors"""
+    def __init__(self, message, details=None):
+        self.message = message
+        self.details = details
+
 
 class OrderService:
     @staticmethod
@@ -23,10 +27,6 @@ class OrderService:
         return new_order
 
     @staticmethod
-    def show_all() -> List[Dict]:
-        return Order.objects.all().values()
-
-    @staticmethod
     def _get_and_verify_existance(**fields) -> Order:
         """Searches by custom set of fields.
 
@@ -38,11 +38,11 @@ class OrderService:
             return Order.objects.get(**fields)
         except Order.DoesNotExist as e:
             raise OrderServiceError(
-                f"There are no order to be found: {str(fields)}"
+                "There are no order to be found.", fields
             ) from e
         except Order.MultipleObjectsReturned as e:
             raise OrderServiceError(
-                f"Multiple objects found with fields: {str(fields)}"
+                "Multiple objects found with fields.", fields
             ) from e
 
     @staticmethod
@@ -50,8 +50,9 @@ class OrderService:
         return OrderService._get_and_verify_existance(id=order_id)
 
     @staticmethod
-    def search_by_table_number(order_table_number: int) -> List[Order]:
-        return Order.objects.filter(table_number=order_table_number)
+    def search_by_filters(**filters: Dict[str, Optional[any]]) -> List[Order]:
+        normalized_filters = {key: val for key, val in filters.items() if val}
+        return Order.objects.filter(**normalized_filters)
 
     @staticmethod
     def remove_by_id(order_id: int) -> int:

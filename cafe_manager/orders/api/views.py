@@ -1,34 +1,44 @@
 from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from orders.services import OrderService, OrderServiceError
 from .serializers import (
     CreateOrderSerializer,
+    ListQueryParamsSerializer,
     OrderSerializer,
     UpdateStatusSerializer,
 )
+from orders.utils import protective_call
 
 
-def handle_service_error(wrapper):
-    from orders.utils import protective_call
+def not_found_error_response(e: OrderServiceError):
+    return Response(
+        {"message": e.message, "details": e.details},
+        status=status.HTTP_404_NOT_FOUND,
+    )
 
-    return protective_call(exception_error_response, OrderServiceError)(
+
+def validation_error_response(serializer):
+    return Response(
+        {"message": "Data validation error.", "details": serializer.errors},
+        status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+    )
+
+
+def handle_not_found_error(wrapper):
+    return protective_call(not_found_error_response, OrderServiceError)(
         wrapper
     )
 
 
-def exception_error_response(e: Exception):
-    return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
-
-
-def validation_error_response(serializer):
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class OrderListView(APIView):
-    @handle_service_error
-    def get(self, _):
-        orders = OrderService.show_all()
+
+    def get(self, request: Request):
+        serializer = ListQueryParamsSerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return validation_error_response(serializer)
+        orders = OrderService.search_by_filters(**serializer.validated_data)
         serialized_orders = [OrderSerializer(order).data for order in orders]
         return Response(
             {"count": len(serialized_orders), "items": serialized_orders}
@@ -36,8 +46,9 @@ class OrderListView(APIView):
 
 
 class OrderCreateView(APIView):
-    @handle_service_error
-    def post(self, request):
+
+    @handle_not_found_error
+    def post(self, request: Request):
         serializer = CreateOrderSerializer(data=request.data)
         if not serializer.is_valid():
             return validation_error_response(serializer)
@@ -49,32 +60,22 @@ class OrderCreateView(APIView):
 
 
 class OrderIdView(APIView):
-    @handle_service_error
-    def get(self, _, order_id):
+
+    @handle_not_found_error
+    def get(self, _, order_id: int):
         order = OrderService.search_by_id(self.kwargs["order_id"])
         return Response(OrderSerializer(order).data)
 
-    @handle_service_error
-    def delete(self, _, order_id):
+    @handle_not_found_error
+    def delete(self, _, order_id: int):
         deleted_amount = OrderService.remove_by_id(self.kwargs["order_id"])
         return Response(deleted_amount)
 
 
-class OrderTableNumberView(APIView):
-    @handle_service_error
-    def get(self, _, table_number):
-        orders = OrderService.search_by_table_number(
-            self.kwargs["table_number"]
-        )
-        serialized_orders = [OrderSerializer(order).data for order in orders]
-        return Response(
-            {"count": len(serialized_orders), "items": serialized_orders}
-        )
-
-
 class OrderIdStatusView(APIView):
-    @handle_service_error
-    def patch(self, request, order_id):
+
+    @handle_not_found_error
+    def patch(self, request, order_id: int):
         serializer = UpdateStatusSerializer(data=request.data)
         if not serializer.is_valid():
             return validation_error_response(serializer)
@@ -90,6 +91,5 @@ class OrderIdStatusView(APIView):
 
 
 class TotalProfitView(APIView):
-    @handle_service_error
     def get(self, _):
         return Response({"total_profit": OrderService.calculate_profit()})

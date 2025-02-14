@@ -12,6 +12,12 @@ class ItemSerializer(serializers.Serializer):
     amount = serializers.IntegerField(min_value=1)
 
 
+class ListQueryParamsSerializer(serializers.Serializer):
+    table_number = serializers.IntegerField(
+        min_value=1, required=False, default=None
+    )
+
+
 class CreateOrderSerializer(serializers.Serializer):
     table_number = serializers.IntegerField(min_value=1)
     items = serializers.ListField(child=ItemSerializer(), allow_empty=False)
