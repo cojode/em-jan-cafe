@@ -38,7 +38,10 @@ class OrderView(APIView):
         serializer = ListQueryParamsSerializer(data=request.query_params)
         if not serializer.is_valid():
             return validation_error_response(serializer)
-        orders = OrderService.search_by_filters(**serializer.validated_data)
+        orders = OrderService.search_by_filters(
+            **serializer.validated_data, normalized=True
+        )
+
         serialized_orders = [OrderSerializer(order).data for order in orders]
         return Response(
             {"count": len(serialized_orders), "items": serialized_orders},
@@ -77,7 +80,6 @@ class OrderIdStatusView(APIView):
         if not serializer.is_valid():
             return validation_error_response(serializer)
 
-        print(serializer.validated_data)
         new_status = serializer.validated_data["status"]
 
         order = OrderService.modify_status_by_id(

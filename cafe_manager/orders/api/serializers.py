@@ -31,14 +31,3 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class UpdateStatusSerializer(serializers.Serializer):
     status = serializers.CharField()
-
-    def validate_status(self, value):
-        """
-        Validate that the status is one of the allowed choices.
-        """
-        allowed_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
-        if value not in allowed_statuses:
-            raise serializers.ValidationError(
-                f"Invalid status. Allowed statuses are: {allowed_statuses}"
-            )
-        return value
