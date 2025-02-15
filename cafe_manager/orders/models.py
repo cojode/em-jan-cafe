@@ -1,11 +1,15 @@
-from django.db import models
-from typing import List, Dict
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
 import decimal
 
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-# Create your models here.
+
+class Dish(models.Model):
+    name = models.CharField(max_length=120)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+
 class OrderStatus(models.TextChoices):
     STATUS_PENDING = "pending", _("В ожидании")
     STATUS_READY = "ready", _("Готово")
@@ -19,7 +23,7 @@ class OrderStatus(models.TextChoices):
 
 class Order(models.Model):
     table_number: int = models.IntegerField()
-    items: List[Dict[str, str]] = models.JSONField()
+    dishes = models.ManyToManyField(Dish, through="OrderDish")
     total_price: decimal.Decimal = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
@@ -39,23 +43,6 @@ class Order(models.Model):
             )
         ]
 
-    def validate_items(self):
-        """Checks whether items is not empty or (cost, amount) is present"""
-        if not self.items:
-            raise ValidationError(
-                "Bad item: empty list of items are not allowed"
-            )
-
-        for item in self.items:
-            needed_fields = ["name", "cost", "amount"]
-            missing_fields = [
-                verify_field
-                for verify_field in needed_fields
-                if verify_field not in item
-            ]
-            if missing_fields:
-                raise ValidationError(f"Bad item: missing {missing_fields}")
-
     def validate_table_number(self):
         """Checks whether table_number is assignable as a positive integer."""
         try:
@@ -67,22 +54,23 @@ class Order(models.Model):
 
     def calculate_total_price(self):
         """Calculate total price."""
-        return sum(
-            decimal.Decimal(item["cost"]) * int(item["amount"])
-            for item in self.items
-        )
-
-    def normalize_items(self):
-        """Convert item values to string to make it jsonable."""
-        self.items = [
-            {k: str(v) for k, v in item.items()} for item in self.items
-        ]
+        total = decimal.Decimal(0)
+        for order_dish in self.order_dishes.all():
+            total += order_dish.dish.price * order_dish.quantity
+        return total
 
     def save(self, *args, **kwargs):
         """Saves an order."""
         self.validate_table_number()
-        self.validate_items()
-        self.total_price = self.calculate_total_price()
-        self.normalize_items()
         OrderStatus.verify_status(self.status)
         super().save(*args, **kwargs)
+
+
+class OrderDish(models.Model):
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="order_dishes"
+    )
+    dish = models.ForeignKey(
+        Dish, on_delete=models.CASCADE, related_name="dish_orders"
+    )
+    quantity = models.PositiveSmallIntegerField(default=1)

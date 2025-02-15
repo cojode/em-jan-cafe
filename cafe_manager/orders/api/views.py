@@ -1,25 +1,19 @@
+import logging
+from functools import wraps
+from typing import Callable
+
+from django.core.paginator import Paginator
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from orders.services import (
-    OrderService,
-    OrderServiceError,
-    SearchError,
-    ConstraintError,
-)
-from .serializers import (
-    CreateOrderSerializer,
-    ListQueryParamsSerializer,
-    OrderSerializer,
-    StatusSerializer,
-    WrappedItemSerializer,
-)
-from django.core.paginator import Paginator
 
-from typing import Callable
-from functools import wraps
-import logging
+from orders.services import (ConstraintError, OrderService, OrderServiceError,
+                             SearchError)
+
+from .serializers import (CreateOrderSerializer, ListQueryParamsSerializer,
+                          OrderSerializer, StatusSerializer,
+                          WrappedDishSerializer)
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +38,7 @@ def protective_call(
             try:
                 return func(*args, **kwargs)
             except errors_to_except as e:
-                logger.warning(
-                    "Error handled from %s: %s", func.__name__, str(e)
-                )
+                logger.debug("Error handled from %s: %s", func.__name__, str(e))
                 return error_handler(e)
 
         return wrapper
@@ -125,9 +117,7 @@ def handle_service_constraint_error(wrapper):
     Returns:
         Callable: A decorated function that handles ConstraintError.
     """
-    return protective_call(bad_request_error_response, ConstraintError)(
-        wrapper
-    )
+    return protective_call(bad_request_error_response, ConstraintError)(wrapper)
 
 
 class OrderView(APIView):
@@ -147,9 +137,7 @@ class OrderView(APIView):
         """
         serializer = ListQueryParamsSerializer(data=request.query_params)
         if not serializer.is_valid():
-            logger.warning(
-                "Validation error in OrderView GET: %s", serializer.errors
-            )
+            logger.debug("Validation error in OrderView GET: %s", serializer.errors)
             return validation_error_response(serializer)
 
         orders = OrderService.search_by_filters(
@@ -188,19 +176,15 @@ class OrderView(APIView):
         """
         serializer = CreateOrderSerializer(data=request.data)
         if not serializer.is_valid():
-            logger.warning(
-                "Validation error in OrderView POST: %s", serializer.errors
-            )
+            logger.debug("Validation error in OrderView POST: %s", serializer.errors)
             return validation_error_response(serializer)
 
         table_number = serializer.validated_data["table_number"]
-        items = serializer.validated_data["items"]
+        dishes = serializer.validated_data["dishes"]
 
-        order = OrderService.create(table_number, items)
+        order = OrderService.create(table_number, dishes)
         logger.info("Created order with ID %d", order.pk)
-        return Response(
-            OrderSerializer(order).data, status=status.HTTP_201_CREATED
-        )
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
 
 class OrderIdView(APIView):
@@ -261,7 +245,7 @@ class OrderIdStatusView(APIView):
         """
         serializer = StatusSerializer(data=request.data)
         if not serializer.is_valid():
-            logger.warning(
+            logger.debug(
                 "Validation error in OrderIdStatusView PATCH: %s",
                 serializer.errors,
             )
@@ -274,36 +258,36 @@ class OrderIdStatusView(APIView):
         return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
 
-class OrderIdItemsView(APIView):
+class OrderIdDishesView(APIView):
     """
-    API View for updating the items of a specific order by its ID.
+    API View for updating the dishes of a specific order by its ID.
     """
 
     @handle_service_search_error
     @handle_service_constraint_error
     def patch(self, request: Request, order_id: int) -> Response:
         """
-        Update the items of a specific order by its ID.
+        Update the dishes of a specific order by its ID.
 
         Args:
-            request (Request): The HTTP request object containing the new items.
+            request (Request): The HTTP request object containing the new dishes.
             order_id (int): The ID of the order to update.
 
         Returns:
             Response: A DRF Response object containing the updated order details.
         """
-        serializer = WrappedItemSerializer(data=request.data)
+        serializer = WrappedDishSerializer(data=request.data)
         if not serializer.is_valid():
-            logger.warning(
-                "Validation error in OrderIdItemsView PATCH: %s",
+            logger.debug(
+                "Validation error in OrderIdDishesView PATCH: %s",
                 serializer.errors,
             )
             return validation_error_response(serializer)
 
-        new_items = serializer.validated_data["items"]
-        order = OrderService.modify_items_by_id(order_id, new_items)
+        new_dishes = serializer.validated_data["dishes"]
+        order = OrderService.modify_dishes_by_id(order_id, new_dishes)
 
-        logger.info("Updated items of order %d", order_id)
+        logger.info("Updated dishes of order %d", order_id)
         return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
 

@@ -1,0 +1,338 @@
+[
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Margherita Pizza",
+            "price": 9.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Pepperoni Pizza",
+            "price": 11.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Vegetarian Pizza",
+            "price": 10.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Hawaiian Pizza",
+            "price": 12.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "BBQ Chicken Pizza",
+            "price": 13.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Cheeseburger",
+            "price": 6.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Bacon Burger",
+            "price": 8.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Veggie Burger",
+            "price": 7.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Mushroom Swiss Burger",
+            "price": 9.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Spaghetti Bolognese",
+            "price": 12.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Fettuccine Alfredo",
+            "price": 13.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Lasagna",
+            "price": 14.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Penne Arrabbiata",
+            "price": 11.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Chicken Caesar Salad",
+            "price": 8.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Greek Salad",
+            "price": 7.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Cobb Salad",
+            "price": 9.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Grilled Chicken Sandwich",
+            "price": 8.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Turkey Club Sandwich",
+            "price": 9.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "BLT Sandwich",
+            "price": 7.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Fish and Chips",
+            "price": 12.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Grilled Salmon",
+            "price": 16.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Shrimp Scampi",
+            "price": 15.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Chicken Tikka Masala",
+            "price": 13.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Beef Stir Fry",
+            "price": 14.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Vegetable Stir Fry",
+            "price": 12.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Pad Thai",
+            "price": 11.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Sushi Roll Combo",
+            "price": 18.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "California Roll",
+            "price": 9.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Dragon Roll",
+            "price": 14.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Miso Soup",
+            "price": 3.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Edamame",
+            "price": 4.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Chicken Teriyaki",
+            "price": 12.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Beef Teriyaki",
+            "price": 14.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Vegetable Tempura",
+            "price": 8.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Chocolate Lava Cake",
+            "price": 6.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Cheesecake",
+            "price": 7.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Tiramisu",
+            "price": 8.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Apple Pie",
+            "price": 5.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Ice Cream Sundae",
+            "price": 4.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Cappuccino",
+            "price": 3.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Latte",
+            "price": 4.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Espresso",
+            "price": 2.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Green Tea",
+            "price": 2.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Iced Tea",
+            "price": 2.49
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Lemonade",
+            "price": 3.49
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Orange Juice",
+            "price": 3.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Mango Smoothie",
+            "price": 5.99
+        }
+    },
+    {
+        "model": "orders.dish",
+        "fields": {
+            "name": "Strawberry Smoothie",
+            "price": 5.99
+        }
+    }
+]

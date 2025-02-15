@@ -1,36 +1,38 @@
 from rest_framework import serializers
-from orders.models import Order
+
+from orders.models import Dish, Order
 
 
-class ItemSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=100)
-    cost = serializers.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        min_value=0.0,
-    )
+class DishSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dish
+        fields = ["id", "name", "price"]
+
+
+class AddDishSerializer(serializers.Serializer):
+    dish_id = serializers.IntegerField(min_value=1)
     amount = serializers.IntegerField(min_value=1)
 
 
 class ListQueryParamsSerializer(serializers.Serializer):
-    table_number = serializers.IntegerField(
-        min_value=1, required=False, default=None
-    )
+    table_number = serializers.IntegerField(min_value=1, required=False, default=None)
 
 
 class CreateOrderSerializer(serializers.Serializer):
     table_number = serializers.IntegerField(min_value=1)
-    items = serializers.ListField(child=ItemSerializer(), allow_empty=False)
+    dishes = serializers.ListField(child=AddDishSerializer(), allow_empty=False)
 
 
-class WrappedItemSerializer(serializers.Serializer):
-    items = serializers.ListField(child=ItemSerializer(), allow_empty=False)
+class WrappedDishSerializer(serializers.Serializer):
+    dishes = serializers.ListField(child=AddDishSerializer(), allow_empty=False)
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    dishes = DishSerializer(many=True, read_only=True)
+
     class Meta:
         model = Order
-        fields = ["id", "table_number", "total_price", "items", "status"]
+        fields = ["id", "table_number", "total_price", "dishes", "status"]
 
 
 class StatusSerializer(serializers.Serializer):

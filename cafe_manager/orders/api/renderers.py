@@ -1,5 +1,5 @@
-from rest_framework.renderers import JSONRenderer
 from rest_framework import status
+from rest_framework.renderers import JSONRenderer
 
 
 class CustomRenderer(JSONRenderer):
@@ -14,6 +14,4 @@ class CustomRenderer(JSONRenderer):
             "data": data if is_success else None,
             "error": data if not is_success else None,
         }
-        return super().render(
-            response_data, accepted_media_type, renderer_context
-        )
+        return super().render(response_data, accepted_media_type, renderer_context)
