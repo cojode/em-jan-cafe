@@ -26,13 +26,13 @@ def validation_error_response(serializer):
     )
 
 
-def handle_not_found_error(wrapper):
+def handle_service_error(wrapper):
     return protective_call(not_found_error_response, OrderServiceError)(
         wrapper
     )
 
 
-class OrderListView(APIView):
+class OrderView(APIView):
 
     def get(self, request: Request):
         serializer = ListQueryParamsSerializer(data=request.query_params)
@@ -41,13 +41,10 @@ class OrderListView(APIView):
         orders = OrderService.search_by_filters(**serializer.validated_data)
         serialized_orders = [OrderSerializer(order).data for order in orders]
         return Response(
-            {"count": len(serialized_orders), "items": serialized_orders}
+            {"count": len(serialized_orders), "items": serialized_orders},
+            status=status.HTTP_200_OK,
         )
 
-
-class OrderCreateView(APIView):
-
-    @handle_not_found_error
     def post(self, request: Request):
         serializer = CreateOrderSerializer(data=request.data)
         if not serializer.is_valid():
@@ -61,20 +58,20 @@ class OrderCreateView(APIView):
 
 class OrderIdView(APIView):
 
-    @handle_not_found_error
+    @handle_service_error
     def get(self, _, order_id: int):
         order = OrderService.search_by_id(self.kwargs["order_id"])
-        return Response(OrderSerializer(order).data)
+        return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
-    @handle_not_found_error
+    @handle_service_error
     def delete(self, _, order_id: int):
-        deleted_amount = OrderService.remove_by_id(self.kwargs["order_id"])
-        return Response(deleted_amount)
+        OrderService.remove_by_id(self.kwargs["order_id"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class OrderIdStatusView(APIView):
 
-    @handle_not_found_error
+    @handle_service_error
     def patch(self, request, order_id: int):
         serializer = UpdateStatusSerializer(data=request.data)
         if not serializer.is_valid():
@@ -87,9 +84,9 @@ class OrderIdStatusView(APIView):
             self.kwargs["order_id"], new_status
         )
 
-        return Response(OrderSerializer(order).data)
+        return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
 
-class TotalProfitView(APIView):
+class RevenueView(APIView):
     def get(self, _):
-        return Response({"total_profit": OrderService.calculate_profit()})
+        return Response({"revenue": OrderService.calculate_profit()})
