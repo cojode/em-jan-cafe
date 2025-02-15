@@ -22,6 +22,7 @@ class ConstraintError(OrderServiceError):
 
 
 class OrderService:
+
     @staticmethod
     def create(table_number: int, items: List[Dict[str, float]]) -> Order:
         """Creates new order entry.
@@ -30,19 +31,19 @@ class OrderService:
         :type table_number: int
         :param items: items in order, represented as JSONField in a model
         :type items: List[Dict[str, float]]
+        :raises ConstraintError: one of the field failed constraint
         :return: newly created Order
         :rtype: Order
         """
-        total_price = sum(item["cost"] * item["amount"] for item in items)
-        jsonable_items = [
-            {k: str(v) for k, v in item.items()} for item in items
-        ]
-        new_order = Order.objects.create(
-            table_number=table_number,
-            items=jsonable_items,
-            total_price=total_price,
-        )
-        return new_order
+        try:
+            return Order.objects.create(
+                table_number=table_number,
+                items=items,
+            )
+        except ValidationError as e:
+            raise ConstraintError(
+                str(e), {"table_number": table_number, "items": items}
+            ) from e
 
     @staticmethod
     def _get_and_verify_unique_existance(**fields) -> Order:
@@ -55,8 +56,8 @@ class OrderService:
         error with reraising **OrderServiceError**
         with message, which contains failed set of fields.
 
-        :raises OrderServiceError: on model.DoesNotExist
-        :raises OrderServiceError: on model.MultipleObjectsReturned
+        :raises SearchError: on model.DoesNotExist
+        :raises SearchError: on model.MultipleObjectsReturned
         :return: found unique order entry
         :rtype: Order
         """
@@ -76,7 +77,7 @@ class OrderService:
         :param order_id: order id
         :type order_id: int
         :return: found order
-        :raises OrderServiceError: failed to found an order with provided id
+        :raises SearchError: failed to found an order with provided id
         :rtype: Order
         """
         return OrderService._get_and_verify_unique_existance(id=order_id)
@@ -113,11 +114,31 @@ class OrderService:
         :param order_id: order id
         :type order_id: int
         :return: found order
-        :raises OrderServiceError: failed to found an order with provided id
+        :raises SearchError: failed to found an order with provided id
         :rtype: Order
         """
         order = OrderService._get_and_verify_unique_existance(id=order_id)
         return order.delete()[0]
+
+    @staticmethod
+    def _modify_order_with_fields_by_id(order_id: int, **fields) -> Order:
+        """Updates an order with custom dict of fields and values
+
+        :param order_id: order id to be updated
+        :type order_id: int
+        :raises SearchError: failed to found an order with provided id
+        :raises ConstraintError: not allowed field or field value
+        :return: updated order
+        :rtype: Order
+        """
+        order = OrderService._get_and_verify_unique_existance(id=order_id)
+        for field, new_value in fields.items():
+            setattr(order, field, new_value)
+        try:
+            order.save(update_fields=fields.keys())
+        except ValidationError as e:
+            raise ConstraintError(str(e), fields) from e
+        return order
 
     @staticmethod
     def modify_status_by_id(order_id: int, new_status: str) -> Order:
@@ -128,17 +149,30 @@ class OrderService:
         :param new_status: status to be applied
         :type new_status: str
         :return: updated order
-        :raises OrderServiceError: failed to found an order with provided id
-        :raises OrderServiceError: not allowed status in new_status
+        :raises SearchError: failed to found an order with provided id
+        :raises ConstraintError: not allowed status
         :rtype: Order
         """
-        order = OrderService._get_and_verify_unique_existance(id=order_id)
-        order.status = new_status
-        try:
-            order.save(update_fields=["status"])
-        except ValidationError as e:
-            raise ConstraintError(str(e), {"status": new_status}) from e
-        return order
+        return OrderService._modify_order_with_fields_by_id(
+            order_id=order_id, status=new_status
+        )
+
+    @staticmethod
+    def modify_items_by_id(order_id: int, new_items: List[Dict[str, float]]):
+        """Updates an order with provided items.
+
+        :param order_id: order id to be updated
+        :type order_id: int
+        :param new_status: items to be applied
+        :type new_status: str
+        :return: updated order
+        :raises SearchError: failed to found an order with provided id
+        :raises ConstraintError: not allowed items
+        :rtype: Order
+        """
+        return OrderService._modify_order_with_fields_by_id(
+            order_id=order_id, items=new_items
+        )
 
     @staticmethod
     def calculate_profit() -> decimal.Decimal:

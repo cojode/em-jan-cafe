@@ -2,7 +2,12 @@ from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from orders.services import OrderService, OrderServiceError
+from orders.services import (
+    OrderService,
+    OrderServiceError,
+    SearchError,
+    ConstraintError,
+)
 from .serializers import (
     CreateOrderSerializer,
     ListQueryParamsSerializer,
@@ -19,6 +24,13 @@ def not_found_error_response(e: OrderServiceError):
     )
 
 
+def bad_request_error_response(e: OrderServiceError):
+    return Response(
+        {"message": e.message, "details": e.details},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
+
+
 def validation_error_response(serializer):
     return Response(
         {"message": "Data validation error.", "details": serializer.errors},
@@ -26,8 +38,12 @@ def validation_error_response(serializer):
     )
 
 
-def handle_service_error(wrapper):
-    return protective_call(not_found_error_response, OrderServiceError)(
+def handle_service_search_error(wrapper):
+    return protective_call(not_found_error_response, SearchError)(wrapper)
+
+
+def handle_service_constraint_error(wrapper):
+    return protective_call(bad_request_error_response, ConstraintError)(
         wrapper
     )
 
@@ -48,6 +64,7 @@ class OrderView(APIView):
             status=status.HTTP_200_OK,
         )
 
+    @handle_service_constraint_error
     def post(self, request: Request):
         serializer = CreateOrderSerializer(data=request.data)
         if not serializer.is_valid():
@@ -61,12 +78,12 @@ class OrderView(APIView):
 
 class OrderIdView(APIView):
 
-    @handle_service_error
+    @handle_service_search_error
     def get(self, _, order_id: int):
         order = OrderService.search_by_id(self.kwargs["order_id"])
         return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
-    @handle_service_error
+    @handle_service_search_error
     def delete(self, _, order_id: int):
         OrderService.remove_by_id(self.kwargs["order_id"])
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -74,7 +91,8 @@ class OrderIdView(APIView):
 
 class OrderIdStatusView(APIView):
 
-    @handle_service_error
+    @handle_service_constraint_error
+    @handle_service_search_error
     def patch(self, request, order_id: int):
         serializer = UpdateStatusSerializer(data=request.data)
         if not serializer.is_valid():
