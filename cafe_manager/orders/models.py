@@ -14,7 +14,7 @@ class OrderStatus(models.TextChoices):
     @staticmethod
     def verify_status(status: str):
         if not status in [choice[0] for choice in OrderStatus.choices]:
-            raise ValidationError("Status not allowed: ")
+            raise ValidationError("Status not allowed:")
 
 
 class Order(models.Model):
@@ -56,6 +56,15 @@ class Order(models.Model):
             if missing_fields:
                 raise ValidationError(f"Bad item: missing {missing_fields}")
 
+    def validate_table_number(self):
+        """Checks whether table_number is assignable as a positive integer."""
+        try:
+            assert int(self.table_number) > 0
+        except (ValueError, AssertionError) as e:
+            raise ValidationError(
+                "Bad table_number: should be a positive integer"
+            ) from e
+
     def calculate_total_price(self):
         """Calculate total price."""
         return sum(
@@ -71,6 +80,7 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         """Saves an order."""
+        self.validate_table_number()
         self.validate_items()
         self.total_price = self.calculate_total_price()
         self.normalize_items()

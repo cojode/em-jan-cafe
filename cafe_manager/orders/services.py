@@ -42,7 +42,7 @@ class OrderService:
             )
         except ValidationError as e:
             raise ConstraintError(
-                str(e), {"table_number": table_number, "items": items}
+                e, {"table_number": table_number, "items": items}
             ) from e
 
     @staticmethod
@@ -137,7 +137,7 @@ class OrderService:
         try:
             order.save(update_fields=fields.keys())
         except ValidationError as e:
-            raise ConstraintError(str(e), fields) from e
+            raise ConstraintError(e, fields) from e
         return order
 
     @staticmethod

@@ -320,7 +320,7 @@ def test_modify_items_by_id_bad_items():
     )
 
     with pytest.raises(ConstraintError):
-        updated_order = OrderService.modify_items_by_id(
+        OrderService.modify_items_by_id(
             order.id,
             [
                 {"name": "Пицца", "cost": "1000.0", "amount": "2"},

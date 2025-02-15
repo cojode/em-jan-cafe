@@ -53,8 +53,30 @@ def test_order_status_validation():
 
 
 @pytest.mark.django_db
+def test_order_table_number_validation():
+    order = Order(
+        table_number=-2,
+        items=[{"name": "Пицца", "cost": "10.50", "amount": "2"}],
+    )
+    with pytest.raises(ValidationError) as excinfo:
+        order.save()
+    assert "Bad table_number: should be a positive integer" in str(
+        excinfo.value
+    )
+
+    order = Order(
+        table_number="not an integer",
+        items=[{"name": "Пицца", "cost": "10.50", "amount": "2"}],
+    )
+    with pytest.raises(ValidationError) as excinfo:
+        order.save()
+    assert "Bad table_number: should be a positive integer" in str(
+        excinfo.value
+    )
+
+
+@pytest.mark.django_db
 def test_order_total_price_calculation():
-    # Создаем заказ с несколькими items
     order = Order(
         table_number=1,
         items=[

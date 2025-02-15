@@ -23,11 +23,15 @@ class CreateOrderSerializer(serializers.Serializer):
     items = serializers.ListField(child=ItemSerializer(), allow_empty=False)
 
 
+class WrappedItemSerializer(serializers.Serializer):
+    items = serializers.ListField(child=ItemSerializer(), allow_empty=False)
+
+
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ["id", "table_number", "total_price", "items", "status"]
 
 
-class UpdateStatusSerializer(serializers.Serializer):
+class StatusSerializer(serializers.Serializer):
     status = serializers.CharField()
