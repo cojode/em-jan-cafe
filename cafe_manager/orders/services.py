@@ -179,7 +179,7 @@ class OrderService:
         order = OrderService._get_and_verify_unique_existance(id=order_id)
         try:
             order.update_dishes(new_dishes)
-        except (ValidationError, Dish.DoesNotExist) as e:
+        except ValidationError as e:
             raise ConstraintError(str(e), {"dishes": new_dishes}) from e
         return order
 

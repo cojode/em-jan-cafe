@@ -78,7 +78,10 @@ class Order(models.Model):
         Raises:
             ValidationError: If a dish ID is invalid or validation fails.
         """
-
+        if len(new_dishes) == 0:
+            raise ValidationError(
+                "Dish validation failed: dishes can not be empty"
+            )
         with transaction.atomic():
             self.dishes.clear()
             for dish_data in new_dishes:
@@ -96,7 +99,7 @@ class Order(models.Model):
                 OrderDish.objects.create(
                     order=self,
                     dish=dish,
-                    quantity=dish_data.get("amount", 1),
+                    quantity=dish_data.get("quantity", 1),
                 )
             self.total_price = self.calculate_total_price()
             self.save(update_fields=["total_price"])
