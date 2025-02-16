@@ -1,10 +1,11 @@
 import decimal
 from typing import Dict, List, Optional
 
-from django.core.exceptions import ValidationError
-from django.db.models import Sum
 
-from orders.models import Dish, Order, OrderStatus
+from django.core.exceptions import ValidationError
+from django.db.models import Sum, F, Prefetch
+
+from orders.models import Dish, Order, OrderStatus, OrderDish
 
 
 class OrderServiceError(Exception):
@@ -103,7 +104,20 @@ class OrderService:
         provided_filters = (
             {key: val for key, val in filters.items() if val} if normalized else filters
         )
-        return Order.objects.filter(**provided_filters).order_by("id")
+        return (
+            Order.objects.filter(**provided_filters)
+            .order_by("id")
+            .prefetch_related(
+                Prefetch(
+                    "order_dishes",
+                    queryset=OrderDish.objects.select_related("dish").annotate(
+                        dish_name=F("dish__name"),
+                        price=F("dish__price"),
+                    ),
+                    to_attr="prefetched_dishes",
+                )
+            )
+        )
 
     @staticmethod
     def remove_by_id(order_id: int) -> int:

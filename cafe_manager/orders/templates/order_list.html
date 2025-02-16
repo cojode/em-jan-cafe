@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <script>
+        function filterOrders() {
+            const tableNumber = document.getElementById("table_number").value;
+            const status = document.getElementById("status").value;
+            const url = new URL(window.location.href);
+            
+            if (tableNumber) {
+                url.searchParams.set("table_number", tableNumber);
+            } else {
+                url.searchParams.delete("table_number");
+            }
+            
+            if (status) {
+                url.searchParams.set("status", status);
+            } else {
+                url.searchParams.delete("status");
+            }
+            
+            window.location.href = url.toString();
+        }
+    </script>
+</head>
+<body>
+    <h1>Order List</h1>
+
+    <!-- Форма поиска -->
+    <div>
+        <label for="table_number">Table Number:</label>
+        <input type="number" id="table_number" name="table_number" value="{{ request.GET.table_number|default:'' }}">
+
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="">-- Select Status --</option>
+            {% for status in statuses %}
+                <option value="{{ status }}" {% if request.GET.status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+
+        <button onclick="filterOrders()">Search</button>
+    </div>
+
+    <!-- Таблица заказов -->
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Table Number</th>
+                <th>Dishes</th>
+                <th>Total Cost</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.table_number }}</td>
+                <td>
+                    <ul>
+                        {% for dish in order.prefetched_dishes %}
+                            <li>{{ dish.dish_name }} ({{ dish.price }}) x {{dish.quantity}}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td>{{ order.total_price }}</td>
+                <td>{{ order.status }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No orders found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

@@ -14,7 +14,7 @@ class OrderAPITestCase(APITestCase):
     def setUp(self):
         self.valid_order_data = {
             "table_number": 5,
-            "dishes": [{"dish_id": 5, "amount": 2}],
+            "dishes": [{"dish_id": 5, "quantity": 2}],
         }
 
         self.invalid_order_data = {
@@ -88,14 +88,21 @@ class OrderAPITestCase(APITestCase):
         self.assertIn("items", response.data)
 
     def test_update_order_items_success(self):
-        new_dishes = [{"dish_id": 1, "amount": 1}]
+        new_dishes = [{"dish_id": 1, "quantity": 1}]
         response = self.client.patch(
             self.order_items_url, {"dishes": new_dishes}, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data["dishes"],
-            [{"id": 1, "name": "Margherita Pizza", "price": "9.99"}],
+            [
+                {
+                    "dish_id": 1,
+                    "dish_name": "Margherita Pizza",
+                    "price": "9.99",
+                    "quantity": 1,
+                }
+            ],
         )
 
     def test_update_order_items_invalid_fails(self):
@@ -115,13 +122,13 @@ class OrderAPITestCase(APITestCase):
         url = reverse("order-dishes", args=[999])
         response = self.client.patch(
             url,
-            {"dishes": [{"dish_id": 123, "amount": 1}]},
+            {"dishes": [{"dish_id": 123, "quantity": 1}]},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_order_items_with_invalid_dish_id_fails(self):
-        new_dishes = [{"dish_id": 999, "amount": 1}]
+        new_dishes = [{"dish_id": 999, "quantity": 1}]
         response = self.client.patch(
             self.order_items_url, {"dishes": new_dishes}, format="json"
         )
@@ -131,7 +138,7 @@ class OrderAPITestCase(APITestCase):
         )
 
     def test_update_order_items_with_negative_quantity_fails(self):
-        new_dishes = [{"dish_id": 1, "amount": -1}]
+        new_dishes = [{"dish_id": 1, "quantity": -1}]
         response = self.client.patch(
             self.order_items_url, {"dishes": new_dishes}, format="json"
         )
@@ -139,7 +146,7 @@ class OrderAPITestCase(APITestCase):
         self.assertIn("Data validation error", response.data["message"])
 
     def test_update_order_items_with_zero_quantity_fails(self):
-        new_dishes = [{"dish_id": 1, "amount": 0}]  # Zero quantity
+        new_dishes = [{"dish_id": 1, "quantity": 0}]  # Zero quantity
         response = self.client.patch(
             self.order_items_url, {"dishes": new_dishes}, format="json"
         )
@@ -147,7 +154,7 @@ class OrderAPITestCase(APITestCase):
         self.assertIn("Data validation error", response.data["message"])
 
     def test_update_order_items_with_missing_dish_id_fails(self):
-        new_dishes = [{"amount": 1}]
+        new_dishes = [{"quantity": 1}]
         response = self.client.patch(
             self.order_items_url, {"dishes": new_dishes}, format="json"
         )
@@ -155,7 +162,7 @@ class OrderAPITestCase(APITestCase):
         self.assertIn("Data validation error", response.data["message"])
 
     def test_update_order_items_with_non_numeric_amount_fails(self):
-        new_dishes = [{"dish_id": 1, "amount": "two"}]
+        new_dishes = [{"dish_id": 1, "quantity": "two"}]
         response = self.client.patch(
             self.order_items_url, {"dishes": new_dishes}, format="json"
         )
@@ -180,7 +187,7 @@ class OrderAPITestCase(APITestCase):
 
         # * Step 2: Update the order's dishes
         update_dishes_url = reverse("order-dishes", args=[order_id])
-        new_dishes = [{"dish_id": 1, "amount": 3}]
+        new_dishes = [{"dish_id": 1, "quantity": 3}]
         update_dishes_response = self.client.patch(
             update_dishes_url, {"dishes": new_dishes}, format="json"
         )
@@ -262,7 +269,7 @@ class OrderAPITestCase(APITestCase):
 
         # * Step 3: Update the order with invalid dishes (should fail)
         update_dishes_url = reverse("order-dishes", args=[order_id])
-        invalid_dishes = [{"dish_id": 999, "amount": 1}]
+        invalid_dishes = [{"dish_id": 999, "quantity": 1}]
         invalid_update_dishes_response = self.client.patch(
             update_dishes_url, {"dishes": invalid_dishes}, format="json"
         )
@@ -272,7 +279,7 @@ class OrderAPITestCase(APITestCase):
         )
 
         # * Step 4: Update the order with valid dishes (should succeed)
-        valid_dishes = [{"dish_id": 1, "amount": 2}]  # Valid dish ID
+        valid_dishes = [{"dish_id": 1, "quantity": 2}]  # Valid dish ID
         valid_update_dishes_response = self.client.patch(
             update_dishes_url, {"dishes": valid_dishes}, format="json"
         )

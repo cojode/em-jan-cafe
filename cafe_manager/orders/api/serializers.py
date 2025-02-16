@@ -1,17 +1,21 @@
 from rest_framework import serializers
+from orders.models import Dish, Order, OrderDish
 
-from orders.models import Dish, Order
 
+class OrderDishSerializer(serializers.ModelSerializer):
+    dish_name = serializers.CharField(source="dish.name", read_only=True)
+    price = serializers.DecimalField(
+        source="dish.price", max_digits=10, decimal_places=2, read_only=True
+    )
 
-class DishSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Dish
-        fields = ["id", "name", "price"]
+        model = OrderDish
+        fields = ["dish_id", "dish_name", "quantity", "price"]
 
 
 class AddDishSerializer(serializers.Serializer):
     dish_id = serializers.IntegerField(min_value=1)
-    amount = serializers.IntegerField(min_value=1)
+    quantity = serializers.IntegerField(min_value=1)
 
 
 class ListQueryParamsSerializer(serializers.Serializer):
@@ -28,7 +32,9 @@ class WrappedDishSerializer(serializers.Serializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    dishes = DishSerializer(many=True, read_only=True)
+    dishes = OrderDishSerializer(
+        source="order_dishes", many=True, read_only=True
+    )
 
     class Meta:
         model = Order
