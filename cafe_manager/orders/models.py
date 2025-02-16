@@ -48,6 +48,7 @@ class Order(models.Model):
     def validate_table_number(self):
         """Checks whether table_number is assignable as a positive integer."""
         try:
+            # ! bad validation
             assert int(self.table_number) > 0
         except (ValueError, AssertionError) as e:
             raise ValidationError(
@@ -77,10 +78,21 @@ class Order(models.Model):
         Raises:
             ValidationError: If a dish ID is invalid or validation fails.
         """
+
         with transaction.atomic():
             self.dishes.clear()
             for dish_data in new_dishes:
-                dish = Dish.objects.get(id=dish_data["dish_id"])
+                try:
+                    dish_id = dish_data["dish_id"]
+                    dish = Dish.objects.get(id=dish_id)
+                except Dish.DoesNotExist as e:
+                    raise ValidationError(
+                        f"Dish validation failed: dish id [{dish_id}] does not exist"
+                    ) from e
+                except ValueError as e:
+                    raise ValidationError(
+                        "Dish validation failed: missing dish_id field"
+                    ) from e
                 OrderDish.objects.create(
                     order=self,
                     dish=dish,

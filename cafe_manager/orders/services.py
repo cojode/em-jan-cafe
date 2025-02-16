@@ -27,28 +27,6 @@ class OrderService:
     """Service class for managing orders, including creation, modification, and retrieval."""
 
     @staticmethod
-    def create(table_number: int, dishes: List[Dict[str, int]]) -> Order:
-        """
-        Creates a new order with the specified table number and dishes.
-
-        Args:
-            table_number (int): The table number for the order.
-            dishes (List[Dict[str, int]]): A list of dictionaries containing dish IDs and quantities.
-
-        Returns:
-            Order: The newly created order.
-
-        Raises:
-            ConstraintError: If a dish ID is invalid or validation fails.
-        """
-        try:
-            return Order.create_order(table_number, dishes)
-        except (ValidationError, Dish.DoesNotExist) as e:
-            raise ConstraintError(
-                str(e), {"table_number": table_number, "dishes": dishes}
-            ) from e
-
-    @staticmethod
     def _get_and_verify_unique_existance(**fields) -> Order:
         """Retrieves a unique order based on the provided filters.
 
@@ -70,6 +48,28 @@ class OrderService:
         except Order.MultipleObjectsReturned as e:
             raise SearchError(
                 "Multiple orders found with the provided filters.", fields
+            ) from e
+
+    @staticmethod
+    def create(table_number: int, dishes: List[Dict[str, int]]) -> Order:
+        """
+        Creates a new order with the specified table number and dishes.
+
+        Args:
+            table_number (int): The table number for the order.
+            dishes (List[Dict[str, int]]): A list of dictionaries containing dish IDs and quantities.
+
+        Returns:
+            Order: The newly created order.
+
+        Raises:
+            ConstraintError: If a dish ID is invalid or validation fails.
+        """
+        try:
+            return Order.create_order(table_number, dishes)
+        except ValidationError as e:
+            raise ConstraintError(
+                str(e), {"table_number": table_number, "dishes": dishes}
             ) from e
 
     @staticmethod
