@@ -1,8 +1,10 @@
 import decimal
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
+
+from typing import List, Dict
 
 
 class Dish(models.Model):
@@ -64,6 +66,49 @@ class Order(models.Model):
         self.validate_table_number()
         OrderStatus.verify_status(self.status)
         super().save(*args, **kwargs)
+
+    def update_dishes(self, new_dishes: List[Dict[str, int]]):
+        """
+        Updates the dishes in the order.
+
+        Args:
+            new_dishes (List[Dict[str, int]]): A list of dictionaries containing dish IDs and quantities.
+
+        Raises:
+            ValidationError: If a dish ID is invalid or validation fails.
+        """
+        with transaction.atomic():
+            self.dishes.clear()
+            for dish_data in new_dishes:
+                dish = Dish.objects.get(id=dish_data["dish_id"])
+                OrderDish.objects.create(
+                    order=self,
+                    dish=dish,
+                    quantity=dish_data.get("amount", 1),
+                )
+            self.total_price = self.calculate_total_price()
+            self.save(update_fields=["total_price"])
+
+    @classmethod
+    def create_order(cls, table_number: int, dishes: List[Dict[str, int]]):
+        """
+        Creates a new order with the specified table number and dishes.
+
+        Args:
+            table_number (int): The table number for the order.
+            dishes (List[Dict[str, int]]): A list of dictionaries containing dish IDs and quantities.
+
+        Returns:
+            Order: The newly created order.
+
+        Raises:
+            ValidationError: If a dish ID is invalid or validation fails.
+        """
+        with transaction.atomic():
+            order = cls(table_number=table_number)
+            order.save()
+            order.update_dishes(dishes)
+        return order
 
 
 class OrderDish(models.Model):

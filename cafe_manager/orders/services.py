@@ -2,10 +2,9 @@ import decimal
 from typing import Dict, List, Optional
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import Sum
 
-from orders.models import Dish, Order, OrderDish, OrderStatus
+from orders.models import Dish, Order, OrderStatus
 
 
 class OrderServiceError(Exception):
@@ -29,7 +28,8 @@ class OrderService:
 
     @staticmethod
     def create(table_number: int, dishes: List[Dict[str, int]]) -> Order:
-        """Creates a new order with the specified table number and dishes.
+        """
+        Creates a new order with the specified table number and dishes.
 
         Args:
             table_number (int): The table number for the order.
@@ -42,16 +42,7 @@ class OrderService:
             ConstraintError: If a dish ID is invalid or validation fails.
         """
         try:
-            with transaction.atomic():
-                order = Order.objects.create(table_number=table_number)
-                order.save()
-
-                for dish_data in dishes:
-                    dish = Dish.objects.get(id=dish_data["dish_id"])
-                    OrderDish.objects.create(order=order, dish=dish)
-                order.total_price = order.calculate_total_price()
-                order.save()
-            return order
+            return Order.create_order(table_number, dishes)
         except (ValidationError, Dish.DoesNotExist) as e:
             raise ConstraintError(
                 str(e), {"table_number": table_number, "dishes": dishes}
@@ -157,7 +148,8 @@ class OrderService:
 
     @staticmethod
     def modify_dishes_by_id(order_id: int, new_dishes: List[Dict[str, int]]) -> Order:
-        """Updates the dishes in an order.
+        """
+        Updates the dishes in an order.
 
         Args:
             order_id (int): The ID of the order to update.
@@ -171,24 +163,10 @@ class OrderService:
             ConstraintError: If a dish ID is invalid or validation fails.
         """
         order = OrderService._get_and_verify_unique_existance(id=order_id)
-
         try:
-            with transaction.atomic():
-                order.dishes.clear()
-                for dish_data in new_dishes:
-                    dish = Dish.objects.get(id=dish_data["dish_id"])
-                    OrderDish.objects.create(
-                        order=order,
-                        dish=dish,
-                        quantity=dish_data.get("amount", 1),
-                    )
-
-                order.total_price = order.calculate_total_price()
-                order.save(update_fields=["total_price"])
-
+            order.update_dishes(new_dishes)
         except (ValidationError, Dish.DoesNotExist) as e:
             raise ConstraintError(str(e), {"dishes": new_dishes}) from e
-
         return order
 
     @staticmethod

@@ -13,6 +13,8 @@ environs = "^14.1.1"
 drf-yasg = "^1.21.8"
 pytest-django = "^4.10.0"
 coverage = "^7.6.12"
+black = "^25.1.0"
+isort = "^6.0.0"
 
 
 [build-system]
