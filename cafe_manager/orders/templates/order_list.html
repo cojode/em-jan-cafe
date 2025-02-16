@@ -5,28 +5,33 @@
 {% block content %}
     <h2>Список заказов</h2>
     <div>
-        <label for="table_number">Номер столика</label>
-        <input type="number" id="table_number" name="table_number" value="{{ request.GET.table_number|default:'' }}">
+        <form id="filterForm" method="get" action="{% url 'order_list' %}">
+            <label for="order_id">ID заказа:</label>
+            <input type="number" id="order_id" name="order_id" value="{{ request.GET.order_id|default:'' }}">
 
-        <label for="status">Status:</label>
-        <select id="status" name="status">
-            <option value="">Любой статус</option>
-            {% for status_code, status_name in statuses %}
-                <option value="{{ status_code }}" {% if request.GET.status == status_code|stringformat:"s" %}selected{% endif %}>{{ status_name }}</option>
-            {% endfor %}
-        </select>
+            <label for="table_number">Номер столика:</label>
+            <input type="number" id="table_number" name="table_number" value="{{ request.GET.table_number|default:'' }}">
 
-        <button onclick="filterOrders()">Поиск</button>
+            <label for="status">Статус:</label>
+            <select id="status" name="status">
+                <option value="">Любой статус</option>
+                {% for status_code, status_name in statuses %}
+                    <option value="{{ status_code }}" {% if request.GET.status == status_code|stringformat:"s" %}selected{% endif %}>{{ status_name }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="button" onclick="submitFilterForm()">Поиск</button>
+        </form>
     </div>
     <table>
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Table Number</th>
-                <th>Dishes</th>
-                <th>Total Cost</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>Номер стола</th>
+                <th>Список блюд</th>
+                <th>Полная стоимость</th>
+                <th>Статус</th>
+                <th>Действия</th>
             </tr>
         </thead>
         <tbody>
@@ -36,16 +41,25 @@
                 <td>{{ order.table_number }}</td>
                 <td>
                     <ul>
-                        {% for dish in order.prefetched_dishes %}
-                            <li>{{ dish.dish_name }} ({{ dish.price }}) x {{ dish.quantity }}</li>
+                        {% for orderdish in order.prefetched_dishes %}
+                            <li> {{ orderdish.dish_name }} ({{ orderdish.price }}) x {{ orderdish.quantity }}</li>
                         {% endfor %}
                     </ul>
                 </td>
                 <td>{{ order.total_price }}</td>
-                <td>{{ order.get_status_display }}</td>
+                <td>
+                    <form method="post" action="{% url 'update_order_status' order.id %}?{{ request.GET.urlencode }}">
+                        {% csrf_token %}
+                        <select name="status" onchange="this.form.submit()">
+                            {% for status_code, status_name in statuses %}
+                                <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
                 <td class="actions">
-                    <a href="{% url 'order_edit' order.id%}">Редактировать</a>
-                    <a href="{% url 'order_delete' order.id %}" onclick="return confirm('Удалить заказ?');">Удалить</a>
+                    <a href="{% url 'order_edit' order.id %}">Редактировать</a>
+                    <a href="{% url 'order_delete' order.id %}?{{ request.GET.urlencode }}" onclick="return confirm('Удалить заказ?');">Удалить</a>
                 </td>
             </tr>
             {% empty %}
@@ -57,25 +71,32 @@
     </table>
 
     <script>
-        function filterOrders() {
+        function submitFilterForm() {
+            const form = document.getElementById("filterForm");
+            const url = new URL(form.action);
+
+            const orderId = document.getElementById("order_id").value;
+            if (orderId) {
+                url.searchParams.set("order_id", orderId);
+            } else {
+                url.searchParams.delete("order_id");
+            }
+
             const tableNumber = document.getElementById("table_number").value;
-            const status = document.getElementById("status").value;
-            const url = new URL(window.location.href);
-            
             if (tableNumber) {
                 url.searchParams.set("table_number", tableNumber);
             } else {
                 url.searchParams.delete("table_number");
             }
-            
+
+            const status = document.getElementById("status").value;
             if (status) {
                 url.searchParams.set("status", status);
             } else {
                 url.searchParams.delete("status");
             }
-            
+
             window.location.href = url.toString();
         }
     </script>
-
 {% endblock %}

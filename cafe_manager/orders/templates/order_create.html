@@ -1,5 +1,9 @@
 {% extends "order_form.html" %}
 
 {% block title %}Создание заказа{% endblock %}
+{% block table_number_input %}
+<label for="table_number">Номер столика:</label>
+<input type="number" name="table_number" value="{{ order.table_number|default:'' }}" required>
+{% endblock %}
 {% block heading %}Создание заказа{% endblock %}
 {% block submit_button %}Оформить заказ{% endblock %}

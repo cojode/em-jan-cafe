@@ -28,10 +28,29 @@ class OrderService:
     """Service class for managing orders, including creation, modification, and retrieval."""
 
     @staticmethod
-    def _get_and_verify_unique_existance(**fields) -> Order:
+    def _custom_prefetch() -> Prefetch:
+        """Stores a DishOrder Prefetch to be applied for inner methods.
+
+        :return: Obtain custom setuped Prefetch for
+        :rtype: Prefetch
+        """
+        return Prefetch(
+            "order_dishes",
+            queryset=OrderDish.objects.select_related("dish").annotate(
+                dish_name=F("dish__name"),
+                price=F("dish__price"),
+            ),
+            to_attr="prefetched_dishes",
+        )
+
+    @staticmethod
+    def _get_and_verify_unique_existance(
+        apply_prefetch: bool = False, **fields
+    ) -> Order:
         """Retrieves a unique order based on the provided filters.
 
         Args:
+            apply_prefetch: (bool, optional): If True, applies OrderDish prefetch for a direct access to a Dish'es. Defaults to False.
             **fields: Filters to search for the order.
 
         Returns:
@@ -41,7 +60,12 @@ class OrderService:
             SearchError: If no order is found or multiple orders match the filters.
         """
         try:
-            return Order.objects.get(**fields)
+            tuned_objects = (
+                Order.objects.prefetch_related(OrderService._custom_prefetch())
+                if apply_prefetch
+                else Order.objects
+            )
+            return tuned_objects.get(**fields)
         except Order.DoesNotExist as e:
             raise SearchError(
                 "No order found with the provided filters.", fields
@@ -74,11 +98,12 @@ class OrderService:
             ) from e
 
     @staticmethod
-    def search_by_id(order_id: int) -> Order:
+    def search_by_id(order_id: int, apply_prefetch: bool = False) -> Order:
         """Retrieves an order by its unique ID.
 
         Args:
             order_id (int): The ID of the order to retrieve.
+            apply_prefetch: (bool, optional): If True, applies OrderDish prefetch for a direct access to a Dish'es. Defaults to False.
 
         Returns:
             Order: The order with the specified ID.
@@ -86,15 +111,20 @@ class OrderService:
         Raises:
             SearchError: If no order is found with the provided ID.
         """
-        return OrderService._get_and_verify_unique_existance(id=order_id)
+        return OrderService._get_and_verify_unique_existance(
+            apply_prefetch=apply_prefetch, id=order_id
+        )
 
     @staticmethod
     def search_by_filters(
-        normalized: bool = False, **filters: Dict[str, Optional[any]]
+        apply_prefetch: bool = False,
+        normalized: bool = False,
+        **filters: Dict[str, Optional[any]]
     ) -> List[Order]:
         """Searches for orders based on the provided filters.
 
         Args:
+            apply_prefetch: (bool, optional): If True, applies OrderDish prefetch for a direct access to a Dish'es. Defaults to False.
             normalized (bool, optional): If True, excludes None-valued keys from filters. Defaults to False.
             **filters: Filters to apply when searching for orders.
 
@@ -104,19 +134,16 @@ class OrderService:
         provided_filters = (
             {key: val for key, val in filters.items() if val} if normalized else filters
         )
+        ordered_filtered_objects = Order.objects.filter(
+            **provided_filters
+        ).order_by("id")
+
         return (
-            Order.objects.filter(**provided_filters)
-            .order_by("id")
-            .prefetch_related(
-                Prefetch(
-                    "order_dishes",
-                    queryset=OrderDish.objects.select_related("dish").annotate(
-                        dish_name=F("dish__name"),
-                        price=F("dish__price"),
-                    ),
-                    to_attr="prefetched_dishes",
-                )
+            ordered_filtered_objects.prefetch_related(
+                OrderService._custom_prefetch()
             )
+            if apply_prefetch
+            else ordered_filtered_objects
         )
 
     @staticmethod
@@ -136,12 +163,15 @@ class OrderService:
         return order.delete()[0]
 
     @staticmethod
-    def modify_status_by_id(order_id: int, new_status: str) -> Order:
+    def modify_status_by_id(
+        order_id: int, new_status: str, apply_prefetch: bool = False
+    ) -> Order:
         """Updates the status of an order.
 
         Args:
             order_id (int): The ID of the order to update.
             new_status (str): The new status to apply.
+            apply_prefetch: (bool, optional): If True, applies OrderDish prefetch for a direct access to a Dish'es. Defaults to False.
 
         Returns:
             Order: The updated order.
@@ -150,7 +180,9 @@ class OrderService:
             SearchError: If no order is found with the provided ID.
             ConstraintError: If the new status is invalid.
         """
-        order = OrderService._get_and_verify_unique_existance(id=order_id)
+        order = OrderService._get_and_verify_unique_existance(
+            apply_prefetch=apply_prefetch, id=order_id
+        )
 
         try:
             order.status = new_status
@@ -161,13 +193,18 @@ class OrderService:
         return order
 
     @staticmethod
-    def modify_dishes_by_id(order_id: int, new_dishes: List[Dict[str, int]]) -> Order:
+    def modify_dishes_by_id(
+        order_id: int,
+        new_dishes_with_quantities: List[Dict[str, int]],
+        apply_prefetch: bool = False,
+    ) -> Order:
         """
         Updates the dishes in an order.
 
         Args:
             order_id (int): The ID of the order to update.
             new_dishes (List[Dict[str, int]]): A list of dictionaries containing dish IDs and quantities.
+            apply_prefetch: (bool, optional): If True, applies OrderDish prefetch for a direct access to a Dish'es. Defaults to False.
 
         Returns:
             Order: The updated order.
@@ -176,11 +213,15 @@ class OrderService:
             SearchError: If no order is found with the provided ID.
             ConstraintError: If a dish ID is invalid or validation fails.
         """
-        order = OrderService._get_and_verify_unique_existance(id=order_id)
+        order = OrderService._get_and_verify_unique_existance(
+            apply_prefetch=apply_prefetch, id=order_id
+        )
         try:
-            order.update_dishes(new_dishes)
+            order.update_dishes(new_dishes_with_quantities)
         except ValidationError as e:
-            raise ConstraintError(str(e), {"dishes": new_dishes}) from e
+            raise ConstraintError(
+                str(e), {"dishes_with_quantities": new_dishes_with_quantities}
+            ) from e
         return order
 
     @staticmethod
@@ -196,3 +237,12 @@ class OrderService:
                 total_profit=Sum("total_price")
             )["total_profit"]
         ) or decimal.Decimal(0)
+
+
+class DishService:
+    """Service class for dishes"""
+
+    @staticmethod
+    def all_dishes() -> List[Dish]:
+        """Get all dishes presented"""
+        return Dish.objects.all()

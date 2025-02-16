@@ -119,7 +119,7 @@ class OrderServiceTests(TestCase):
 
         updated_order = OrderService.modify_dishes_by_id(
             order.id,
-            [{"dish_id": dish1.id, "amount": 2}, {"dish_id": dish2.id}],
+            [{"dish_id": dish1.id, "quantity": 2}, {"dish_id": dish2.id}],
         )
 
         self.assertEqual(
@@ -273,7 +273,7 @@ class OrderServiceTests(TestCase):
         # * Step 4: Update the order with valid dishes (should succeed)
         updated_order = OrderService.modify_dishes_by_id(
             order.id,
-            [{"dish_id": dish1.id, "amount": 2}, {"dish_id": dish2.id}],
+            [{"dish_id": dish1.id, "quantity": 2}, {"dish_id": dish2.id}],
         )
         self.assertEqual(updated_order.total_price, Decimal("31.97"))
         self.assertEqual(updated_order.order_dishes.count(), 2)
@@ -334,7 +334,7 @@ class OrderServiceTests(TestCase):
         updated_order = OrderService.modify_dishes_by_id(
             order.id,
             [
-                {"dish_id": dish1.id, "amount": 2},
+                {"dish_id": dish1.id, "quantity": 2},
                 {"dish_id": dish2.id},
             ],  # 2x Margherita, 1x Pepperoni
         )

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Прибыль{% endblock %}
+
+{% block content %}
+    <h1>Общая прибыль</h1>
+    <p>Общая прибыль от оплаченных заказов: <strong>${{ total_profit|floatformat:2 }}</strong></p>
+    <a href="{% url 'order_list' %}">Назад к списку заказов</a>
+{% endblock %}

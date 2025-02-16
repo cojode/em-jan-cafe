@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Order Form{% endblock %}</title>
+{% extends "base.html" %}
+
+{% block title %}Order Form{% endblock %}
+
+{% block extra_scripts %}
     <script>
         function addDish() {
             const dishSelect = document.getElementById("dishSelect");
@@ -58,11 +57,46 @@
         }
 
         function removeDish(dishId) {
-            document.getElementById(`dish-${dishId}`).remove();
+            const dishElement = document.getElementById(`dish-${dishId}`);
+            if (dishElement) {
+                dishElement.remove();
+            }
         }
+
+        // Function to pre-populate dishes when the page loads
+        function populateDishes() {
+            const selectedDishes = document.getElementById("selectedDishes");
+            const dishes = [
+                {% for orderdish in order.prefetched_dishes %}
+                    {
+                        id: "{{ orderdish.dish_id }}",
+                        name: "{{ orderdish.dish_name }}",
+                        quantity: {{ orderdish.quantity }}
+                    },
+                {% endfor %}
+            ];
+
+            dishes.forEach(dish => {
+                const listItem = document.createElement("li");
+                listItem.id = `dish-${dish.id}`;
+                listItem.innerHTML = `
+                    ${dish.name} - 
+                    <span class="quantity-display">${dish.quantity}</span> шт.
+                    <input type="number" class="quantity-input" value="${dish.quantity}" min="1" onchange="updateQuantity('${dish.id}', this.value)">
+                    <input type="hidden" name="dishes" value="${dish.id}">
+                    <input type="hidden" name="quantities" value="${dish.quantity}">
+                    <button type="button" onclick="removeDish('${dish.id}')">Удалить</button>
+                `;
+                selectedDishes.appendChild(listItem);
+            });
+        }
+
+        // Call populateDishes when the page loads
+        window.onload = populateDishes;
     </script>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <h1>{% block heading %}Order Form{% endblock %}</h1>
 
     {% if error %}
@@ -71,10 +105,7 @@
 
     <form method="post">
         {% csrf_token %}
-        
-        <label for="table_number">Номер столика:</label>
-        <input type="number" name="table_number" value="{{ order.table_number|default:'' }}" required>
-
+        {% block table_number_input %}{% endblock %}
         <h3>Выберите блюда:</h3>
         <select id="dishSelect">
             {% for dish in dishes %}
@@ -86,21 +117,10 @@
 
         <h3>Выбранные блюда</h3>
         <ul id="selectedDishes">
-            {% for dish in order.dishes.all %}
-                <li id="dish-{{ dish.id }}">
-                    {{ dish.name }} - 
-                    <span class="quantity-display">{{ dish.quantity }}</span> шт.
-                    <input type="number" class="quantity-input" value="{{ dish.quantity }}" min="1" onchange="updateQuantity('{{ dish.id }}', this.value)">
-                    <input type="hidden" name="dishes" value="{{ dish.id }}">
-                    <input type="hidden" name="quantities" value="{{ dish.quantity }}">
-                    <button type="button" onclick="removeDish('{{ dish.id }}')">Удалить</button>
-                </li>
-            {% endfor %}
         </ul>
 
         <button type="submit">{% block submit_button %}Оформить заказ{% endblock %}</button>
     </form>
 
     <a href="{% url 'order_list' %}">К списку заказов</a>
-</body>
-</html>
+{% endblock %}

@@ -18,7 +18,8 @@
     <h1>Менеджер заказов</h1>
     <nav>
         <a href="{% url 'order_list' %}">Все заказы</a> |
-        <a href="{% url 'order_create' %}">Создать заказ</a>
+        <a href="{% url 'order_create' %}">Создать заказ</a> |
+        <a href="{% url 'profit_view' %}">Прибыль</a>
     </nav>
     
     {% block content %}{% endblock %}

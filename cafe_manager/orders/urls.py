@@ -4,6 +4,8 @@ from orders.views import (
     order_create,
     order_edit,
     order_delete,
+    update_order_status,
+    profit_view,
 )
 
 urlpatterns = [
@@ -15,5 +17,11 @@ urlpatterns = [
         order_edit,
         name="order_edit",
     ),
+    path(
+        "orders/<int:order_id>/update_status/",
+        update_order_status,
+        name="update_order_status",
+    ),
     path("orders/<int:order_id>/delete/", order_delete, name="order_delete"),
+    path("orders/profit/", profit_view, name="profit_view"),
 ]
