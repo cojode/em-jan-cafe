@@ -1,10 +1,9 @@
 import decimal
+from typing import Dict, List
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
-
-from typing import List, Dict
 
 
 class Dish(models.Model):
@@ -46,7 +45,7 @@ class Order(models.Model):
         ]
 
     def validate_table_number(self):
-        """Checks whether table_number is assignable as a positive integer."""
+        """Checks whether table_number is convertable and/or represented as a positive integer."""
         try:
             # ! bad validation
             assert int(self.table_number) > 0
@@ -79,9 +78,7 @@ class Order(models.Model):
             ValidationError: If a dish ID is invalid or validation fails.
         """
         if len(new_dishes) == 0:
-            raise ValidationError(
-                "Dish validation failed: dishes can not be empty"
-            )
+            raise ValidationError("Dish validation failed: dishes can not be empty")
         with transaction.atomic():
             self.dishes.clear()
             for dish_data in new_dishes:
@@ -130,7 +127,5 @@ class OrderDish(models.Model):
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="order_dishes"
     )
-    dish = models.ForeignKey(
-        Dish, on_delete=models.CASCADE, related_name="dish_orders"
-    )
+    dish = models.ForeignKey(Dish, on_delete=models.CASCADE, related_name="dish_orders")
     quantity = models.PositiveSmallIntegerField(default=1)

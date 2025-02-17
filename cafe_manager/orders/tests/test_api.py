@@ -133,9 +133,7 @@ class OrderAPITestCase(APITestCase):
             self.order_items_url, {"dishes": new_dishes}, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn(
-            "Dish validation failed: dish id", response.data["message"]
-        )
+        self.assertIn("Dish validation failed: dish id", response.data["message"])
 
     def test_update_order_items_with_negative_quantity_fails(self):
         new_dishes = [{"dish_id": 1, "quantity": -1}]

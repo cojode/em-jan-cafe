@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from orders.models import Dish, Order, OrderDish
 
 
@@ -32,9 +33,7 @@ class WrappedDishSerializer(serializers.Serializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    dishes = OrderDishSerializer(
-        source="order_dishes", many=True, read_only=True
-    )
+    dishes = OrderDishSerializer(source="order_dishes", many=True, read_only=True)
 
     class Meta:
         model = Order

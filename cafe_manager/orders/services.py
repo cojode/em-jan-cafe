@@ -1,11 +1,10 @@
 import decimal
 from typing import Dict, List, Optional
 
-
 from django.core.exceptions import ValidationError
-from django.db.models import Sum, F, Prefetch
+from django.db.models import F, Prefetch, Sum
 
-from orders.models import Dish, Order, OrderStatus, OrderDish
+from orders.models import Dish, Order, OrderDish, OrderStatus
 
 
 class OrderServiceError(Exception):
@@ -134,14 +133,12 @@ class OrderService:
         provided_filters = (
             {key: val for key, val in filters.items() if val} if normalized else filters
         )
-        ordered_filtered_objects = Order.objects.filter(
-            **provided_filters
-        ).order_by("id")
+        ordered_filtered_objects = Order.objects.filter(**provided_filters).order_by(
+            "id"
+        )
 
         return (
-            ordered_filtered_objects.prefetch_related(
-                OrderService._custom_prefetch()
-            )
+            ordered_filtered_objects.prefetch_related(OrderService._custom_prefetch())
             if apply_prefetch
             else ordered_filtered_objects
         )

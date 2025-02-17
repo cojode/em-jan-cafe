@@ -3,12 +3,8 @@ from decimal import Decimal
 from django.test import TestCase
 
 from orders.models import Dish, Order, OrderDish, OrderStatus
-from orders.services import (
-    ConstraintError,
-    OrderService,
-    OrderServiceError,
-    SearchError,
-)
+from orders.services import (ConstraintError, OrderService, OrderServiceError,
+                             SearchError)
 
 
 class OrderServiceTests(TestCase):
@@ -32,9 +28,7 @@ class OrderServiceTests(TestCase):
         with self.assertRaises(ConstraintError) as context:
             OrderService.create(table_number=1, dishes=[{"dish_id": 999}])
 
-        self.assertIn(
-            "Dish validation failed: dish id", str(context.exception)
-        )
+        self.assertIn("Dish validation failed: dish id", str(context.exception))
 
     def test_search_by_id_success(self):
         """Test searching for an order by ID successfully."""
@@ -135,9 +129,7 @@ class OrderServiceTests(TestCase):
         with self.assertRaises(ConstraintError) as context:
             OrderService.modify_dishes_by_id(order.id, [{"dish_id": 999}])
 
-        self.assertIn(
-            "Dish validation failed: dish id", str(context.exception)
-        )
+        self.assertIn("Dish validation failed: dish id", str(context.exception))
 
     def test_calculate_profit_success(self):
         """Test calculating total profit from paid orders."""
@@ -186,9 +178,7 @@ class OrderServiceTests(TestCase):
         # * Step 2: Attempt to update the order with invalid dishes (should fail)
         with self.assertRaises(ConstraintError) as context:
             OrderService.modify_dishes_by_id(order.id, [{"dish_id": 999}])
-        self.assertIn(
-            "Dish validation failed: dish id", str(context.exception)
-        )
+        self.assertIn("Dish validation failed: dish id", str(context.exception))
 
         # * Step 3: Verify that the original dishes remain unchanged
         order.refresh_from_db()
@@ -206,9 +196,7 @@ class OrderServiceTests(TestCase):
         # * Step 1: Attempt to create an order with invalid dishes (should fail and roll back)
         with self.assertRaises(ConstraintError) as context:
             OrderService.create(table_number=1, dishes=[{"dish_id": 999}])
-        self.assertIn(
-            "Dish validation failed: dish id", str(context.exception)
-        )
+        self.assertIn("Dish validation failed: dish id", str(context.exception))
 
         # * Verify that no order was created
         self.assertEqual(Order.objects.count(), 0)
@@ -225,9 +213,7 @@ class OrderServiceTests(TestCase):
         # * Step 3: Attempt to update the order with invalid dishes (should fail and roll back)
         with self.assertRaises(ConstraintError) as context:
             OrderService.modify_dishes_by_id(order.id, [{"dish_id": 999}])
-        self.assertIn(
-            "Dish validation failed: dish id", str(context.exception)
-        )
+        self.assertIn("Dish validation failed: dish id", str(context.exception))
 
         # * Step 4: Verify that the order remains unchanged after failed updates
         order.refresh_from_db()
@@ -266,9 +252,7 @@ class OrderServiceTests(TestCase):
         # * Step 3: Update the order with invalid dishes (should fail)
         with self.assertRaises(ConstraintError) as context:
             OrderService.modify_dishes_by_id(order.id, [{"dish_id": 999}])
-        self.assertIn(
-            "Dish validation failed: dish id", str(context.exception)
-        )
+        self.assertIn("Dish validation failed: dish id", str(context.exception))
 
         # * Step 4: Update the order with valid dishes (should succeed)
         updated_order = OrderService.modify_dishes_by_id(

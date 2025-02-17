@@ -2,4 +2,7 @@
 
 {% block title %}Редактирование заказа{% endblock %}
 {% block heading %}Редактирование заказа{% endblock %}
+{% block old_order_cost %}
+{{ order.total_price }}$ &rarr;
+{% endblock %}
 {% block submit_button %}Сохранить изменения{% endblock %}

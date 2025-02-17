@@ -8,20 +8,12 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from orders.services import (
-    ConstraintError,
-    OrderService,
-    OrderServiceError,
-    SearchError,
-)
+from orders.services import (ConstraintError, OrderService, OrderServiceError,
+                             SearchError)
 
-from .serializers import (
-    CreateOrderSerializer,
-    ListQueryParamsSerializer,
-    OrderSerializer,
-    StatusSerializer,
-    WrappedDishSerializer,
-)
+from .serializers import (CreateOrderSerializer, ListQueryParamsSerializer,
+                          OrderSerializer, StatusSerializer,
+                          WrappedDishSerializer)
 
 logger = logging.getLogger(__name__)
 

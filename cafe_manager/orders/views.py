@@ -1,17 +1,24 @@
-from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404
-from orders.models import OrderStatus
-from orders.services import (
-    OrderService,
-    SearchError,
-    OrderServiceError,
-    DishService,
-)
-from django.contrib import messages
+from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from orders.models import OrderStatus
+from orders.services import (DishService, OrderService, OrderServiceError,
+                             SearchError)
+
+
 def order_list(request):
+    """
+    Displays a list of orders filtered by optional query parameters.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: Rendered order list page with filtered orders and status choices.
+    """
     filters = {
         filter: request.GET.get(filter)
         for filter in ["table_number", "status", "order_id"]
@@ -30,6 +37,18 @@ def order_list(request):
 
 
 def _process_dishes(request):
+    """
+    Processes dish data from the request to create a list of dishes with quantities.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        list: A list of dictionaries containing dish IDs and quantities.
+
+    Raises:
+        ValidationError: If no valid dishes with quantities are provided.
+    """
     dish_ids = request.POST.getlist("dishes")
     quantities = request.POST.getlist("quantities")
     dishes = [
@@ -45,6 +64,15 @@ def _process_dishes(request):
 
 
 def order_create(request):
+    """
+    Handles the creation of a new order.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: Rendered order creation page or redirects to the order list page.
+    """
     if request.method == "POST":
         try:
             dishes = _process_dishes(request)
@@ -62,10 +90,23 @@ def order_create(request):
 
 
 def order_edit(request, order_id):
+    """
+    Handles the editing of an existing order.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        order_id (int): The ID of the order to be edited.
+
+    Returns:
+        HttpResponse: Rendered order edit page or redirects to the order list page.
+
+    Raises:
+        Http404: If the order with the specified ID is not found.
+    """
     try:
         order = OrderService.search_by_id(order_id, apply_prefetch=True)
     except SearchError:
-        raise Http404("Order not found")
+        raise Http404("Order not found") from SearchError
 
     if request.method == "POST":
         try:
@@ -90,6 +131,15 @@ def order_edit(request, order_id):
 
 
 def _order_list_with_query_params(request):
+    """
+    Constructs a URL for the order list page with preserved query parameters.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        str: The URL for the order list page with query parameters.
+    """
     query_params = request.GET.urlencode()
     redirect_url = reverse("order_list")
     if query_params:
@@ -98,6 +148,16 @@ def _order_list_with_query_params(request):
 
 
 def order_delete(request, order_id):
+    """
+    Handles the deletion of an order.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        order_id (int): The ID of the order to be deleted.
+
+    Returns:
+        HttpResponse: Redirects to the order list page with a success or error message.
+    """
     try:
         OrderService.remove_by_id(order_id)
         messages.success(request, "Заказ успешно удален!")
@@ -107,6 +167,16 @@ def order_delete(request, order_id):
 
 
 def update_order_status(request, order_id):
+    """
+    Handles the updating of an order's status.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        order_id (int): The ID of the order to be updated.
+
+    Returns:
+        HttpResponse: Redirects to the order list page with a success or error message.
+    """
     if request.method == "POST":
         try:
             new_status = request.POST.get("status")
@@ -119,5 +189,14 @@ def update_order_status(request, order_id):
 
 
 def profit_view(request):
+    """
+    Displays the total profit from all orders.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: Rendered profit page with the total profit.
+    """
     total_profit = OrderService.calculate_profit()
     return render(request, "profit.html", {"total_profit": total_profit})

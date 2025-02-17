@@ -3,124 +3,144 @@
 {% block title %}Order Form{% endblock %}
 
 {% block extra_scripts %}
-    <script>
-        function addDish() {
+<script>
+    function buildDishLineInnerHtml(dishName, quantity, dishId) {
+    return `<div class='dish-line'>
+        <span class="order-dish-name">${dishName}</span>
+        <input type="number" class="quantity-input" value="${quantity}" min="1" onchange="updateQuantity('${dishId}', this.value)">
+        <input type="hidden" name="dishes" value="${dishId}">
+        <input type="hidden" name="quantities" value="${quantity}">
+        <button type="button" class="remove-dish" onclick="removeDish('${dishId}')">Удалить</button>
+        </div>
+    `
+    }
+    function calculateTotalCost() {
+        const selectedDishes = document.getElementById("selectedDishes").getElementsByTagName("li");
+        let totalCost = 0;
+
+        Array.from(selectedDishes).forEach(dishElement => {
+            const dishId = dishElement.id.split("-")[1];
             const dishSelect = document.getElementById("dishSelect");
-            const quantityInput = document.getElementById("quantityInput");
-            const selectedDishes = document.getElementById("selectedDishes");
+            const dishOption = dishSelect.querySelector(`option[value="${dishId}"]`);
+            const price = parseFloat(dishOption.getAttribute("data-price"));
+            const quantity = parseInt(dishElement.querySelector('input[name="quantities"]').value);
 
-            const dishId = dishSelect.value;
-            const dishName = dishSelect.options[dishSelect.selectedIndex].text;
-            const quantity = parseInt(quantityInput.value);
+            totalCost += price * quantity;
+        });
 
-            if (!dishId || quantity <= 0) {
-                alert("Пожалуйста выберите блюдо и введите его корректное количество.");
-                return;
-            }
+        document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+    }
 
-            const existingDish = document.getElementById(`dish-${dishId}`);
-            if (existingDish) {
-                const existingQuantityInput = existingDish.querySelector('input[name="quantities"]');
-                const existingQuantityDisplay = existingDish.querySelector('.quantity-display');
-                const existingQuantityNumberInput = existingDish.querySelector('.quantity-input');
+    function addDish() {
+        const dishSelect = document.getElementById("dishSelect");
+        const quantityInput = document.getElementById("quantityInput");
+        const selectedDishes = document.getElementById("selectedDishes");
 
-                const existingQuantity = parseInt(existingQuantityInput.value);
-                const newQuantity = existingQuantity + quantity;
+        const dishId = dishSelect.value;
+        const dishName = dishSelect.options[dishSelect.selectedIndex].text;
+        const quantity = parseInt(quantityInput.value);
 
-                existingQuantityInput.value = newQuantity;
-                existingQuantityDisplay.textContent = newQuantity;
-                existingQuantityNumberInput.value = newQuantity;
-            } else {
-                const listItem = document.createElement("li");
-                listItem.id = `dish-${dishId}`;
-                listItem.innerHTML = `
-                    ${dishName} - 
-                    <span class="quantity-display">${quantity}</span> шт.
-                    <input type="number" class="quantity-input" value="${quantity}" min="1" onchange="updateQuantity('${dishId}', this.value)">
-                    <input type="hidden" name="dishes" value="${dishId}">
-                    <input type="hidden" name="quantities" value="${quantity}">
-                    <button type="button" onclick="removeDish('${dishId}')">Удалить</button>
-                `;
-                selectedDishes.appendChild(listItem);
-            }
+        if (!dishId || isNaN(quantity) || quantity <= 0) {
+            alert("Пожалуйста, выберите блюдо и введите корректное количество.");
+            return;
         }
 
-        function updateQuantity(dishId, newQuantity) {
-            const dishElement = document.getElementById(`dish-${dishId}`);
-            if (dishElement) {
-                const quantityDisplay = dishElement.querySelector('.quantity-display');
-                const hiddenQuantityInput = dishElement.querySelector('input[name="quantities"]');
+        const existingDish = document.getElementById(`dish-${dishId}`);
+        if (existingDish) {
+            const existingQuantityInput = existingDish.querySelector('input[name="quantities"]');
+            const existingQuantityNumberInput = existingDish.querySelector('.quantity-input');
 
-                quantityDisplay.textContent = newQuantity;
-                hiddenQuantityInput.value = newQuantity;
-            }
+            const existingQuantity = parseInt(existingQuantityInput.value);
+            const newQuantity = existingQuantity + quantity;
+
+            existingQuantityInput.value = newQuantity;
+            existingQuantityNumberInput.value = newQuantity;
+        } else {
+            const listItem = document.createElement("li");
+            listItem.id = `dish-${dishId}`;
+            listItem.innerHTML = buildDishLineInnerHtml(dishName, quantity, dishId);
+            selectedDishes.appendChild(listItem);
         }
 
-        function removeDish(dishId) {
-            const dishElement = document.getElementById(`dish-${dishId}`);
-            if (dishElement) {
-                dishElement.remove();
-            }
+        calculateTotalCost();
+    }
+
+    function updateQuantity(dishId, newQuantity) {
+        const dishElement = document.getElementById(`dish-${dishId}`);
+        if (dishElement) {
+            const hiddenQuantityInput = dishElement.querySelector('input[name="quantities"]');
+            hiddenQuantityInput.value = newQuantity;
         }
 
-        // Function to pre-populate dishes when the page loads
-        function populateDishes() {
-            const selectedDishes = document.getElementById("selectedDishes");
-            const dishes = [
-                {% for orderdish in order.prefetched_dishes %}
-                    {
-                        id: "{{ orderdish.dish_id }}",
-                        name: "{{ orderdish.dish_name }}",
-                        quantity: {{ orderdish.quantity }}
-                    },
-                {% endfor %}
-            ];
+        calculateTotalCost();
+    }
 
-            dishes.forEach(dish => {
-                const listItem = document.createElement("li");
-                listItem.id = `dish-${dish.id}`;
-                listItem.innerHTML = `
-                    ${dish.name} - 
-                    <span class="quantity-display">${dish.quantity}</span> шт.
-                    <input type="number" class="quantity-input" value="${dish.quantity}" min="1" onchange="updateQuantity('${dish.id}', this.value)">
-                    <input type="hidden" name="dishes" value="${dish.id}">
-                    <input type="hidden" name="quantities" value="${dish.quantity}">
-                    <button type="button" onclick="removeDish('${dish.id}')">Удалить</button>
-                `;
-                selectedDishes.appendChild(listItem);
-            });
+    function removeDish(dishId) {
+        const dishElement = document.getElementById(`dish-${dishId}`);
+        if (dishElement) {
+            dishElement.remove();
+        calculateTotalCost();
         }
+    }
 
-        // Call populateDishes when the page loads
-        window.onload = populateDishes;
-    </script>
+    function populateDishes() {
+        const selectedDishes = document.getElementById("selectedDishes");
+        const dishes = [
+            {% for orderdish in order.prefetched_dishes %}
+                {
+                    id: "{{ orderdish.dish_id }}",
+                    name: "{{ orderdish.dish_name }}",
+                    quantity: {{ orderdish.quantity }},
+                    price: {{ orderdish.price }}
+                },
+            {% endfor %}
+        ];
+
+        dishes.forEach(dish => {
+            const listItem = document.createElement("li");
+            listItem.id = `dish-${dish.id}`;
+            listItem.innerHTML = buildDishLineInnerHtml(`${dish.name} - $${dish.price}`, dish.quantity, dish.id);
+            selectedDishes.appendChild(listItem);
+        });
+
+        calculateTotalCost();
+    }
+
+    window.onload = populateDishes;
+</script>
 {% endblock %}
 
 {% block content %}
-    <h1>{% block heading %}Order Form{% endblock %}</h1>
+    <div class="order-form">
+        <h1>{% block heading %}{% endblock %}</h1>
 
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        {% block table_number_input %}{% endblock %}
-        <h3>Выберите блюда:</h3>
-        <select id="dishSelect">
-            {% for dish in dishes %}
-                <option value="{{ dish.id }}">{{ dish.name }} - ${{ dish.price }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="quantityInput" placeholder="1" min="1" value="1">
-        <button type="button" onclick="addDish()">Добавить к заказу</button>
+        <form method="post">
+            {% csrf_token %}
+            {% block table_number_input %}{% endblock %}
+            <h3>Выберите блюда:</h3>
+            <div class="dish-selection">
+                <select id="dishSelect">
+                    {% for dish in dishes %}
+                        <option value="{{ dish.id }}" data-price="{{ dish.price }}">{{ dish.name }} - ${{ dish.price }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" id="quantityInput" placeholder="1" min="1" value="1">
+                <button type="button" onclick="addDish()">Добавить к заказу</button>
+            </div>
 
-        <h3>Выбранные блюда</h3>
-        <ul id="selectedDishes">
-        </ul>
+            <h3>Выбранные блюда</h3>
+            <ul id="selectedDishes"></ul>
+            
+            <h3>Стоимость заказа: {% block old_order_cost %}{% endblock %} <span id="totalCost">0</span> $</h3>
+            
 
-        <button type="submit">{% block submit_button %}Оформить заказ{% endblock %}</button>
-    </form>
+            <button type="submit" class="submit-button">{% block submit_button %}{% endblock %}</button>
+        </form>
 
-    <a href="{% url 'order_list' %}">К списку заказов</a>
+        <a href="{% url 'order_list' %}" class="back-link">К списку заказов</a>
+    </div>
 {% endblock %}

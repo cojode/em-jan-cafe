@@ -1,12 +1,7 @@
 from django.urls import include, path
-from orders.views import (
-    order_list,
-    order_create,
-    order_edit,
-    order_delete,
-    update_order_status,
-    profit_view,
-)
+
+from orders.views import (order_create, order_delete, order_edit, order_list,
+                          profit_view, update_order_status)
 
 urlpatterns = [
     path("api/", include("orders.api.urls")),
