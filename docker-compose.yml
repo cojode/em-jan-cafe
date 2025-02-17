@@ -1,5 +1,5 @@
 services:
-  web:
+  dev:
     image: django-cafe-manager
     build:
       context: .
@@ -7,11 +7,29 @@ services:
     container_name: django_cafe_manager
     env_file:
       - .env
-    ports:
-      - "8000:8000"
     volumes:
       - .:/app
+    ports:
+      - "8000:8000"
+
+    profiles:
+      - dev
+
     command: >
       sh -c "python manage.py migrate &&
              python manage.py loaddata example_dishes &&
              python manage.py runserver 0.0.0.0:8000"
+
+  test:
+    image: django-cafe-manager
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django_cafe_manager_test
+    env_file:
+      - .env.test
+    profiles:
+      - test
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py test"

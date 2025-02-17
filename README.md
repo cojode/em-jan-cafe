@@ -57,7 +57,7 @@ python manage.py runserver
 Убедитесь что находитесь в корне проекта:
 
 ```sh
-docker compose up --build 
+docker compose --profile dev up --build
 ```
 
 Остановить контейнер:
@@ -68,17 +68,29 @@ docker compose down
 
 ## API
 
-Дополнительно реализуется REST API для взаимодействия с заказами.
+Тут будет ссылка на документацию swagger...
 
 ### Примеры запросов
 
-- **Получить список заказов**: `GET /api/orders/`
-
 ## Тестирование
+
+Тесты для ```orders``` хранятся в ```cafe_manager/orders/tests```
 
 ### Запуск тестов
 
+Локально:
+
 ```sh
+cd cafe_manager
+python manage.py test
+```
+
+В контейнере:
+
+```sh
+docker compose --profile test up --build
 ```
 
 ## Структура проекта
+
+Тут будет вывод ```tree .``` с комментариями...
