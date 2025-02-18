@@ -115,7 +115,8 @@ em-jan-cafe
 │   │   ├── __init__.py
 │   │   ├── migrations  
 │   │   ├── models.py   # Модели Order, Dish, DishOrder
-│   │   ├── services.py # Сервисный слой между Django ORM и представлением (переиспользуется в WI и API views)
+│   │   ├── services.py # Сервисный слой между Django ORM и представлением
+│   │   │               # (переиспользуется в WI и API views)
 │   │   ├── templates   
 │   │   ├── tests       # Тесты сервиса и API эндпоинтов
 │   │   ├── urls.py     # Основные маршруты веб-интерфейса и подключение API маршрутов
