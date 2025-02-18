@@ -52,7 +52,7 @@ python manage.py loaddata example_dishes
 python manage.py runserver
 ```
 
-### 3 Запуск внутри контейнера
+### 3. Запуск внутри контейнера
 
 Убедитесь что находитесь в корне проекта:
 
@@ -66,11 +66,15 @@ docker compose --profile dev up --build
 docker compose down
 ```
 
-## API
+### Ресурсы
 
-Тут будет ссылка на документацию swagger...
+По умолчанию проект запускается на ```localhost:8000```
 
-### Примеры запросов
+Веб-интерфейс: ```localhost:8000/orders```
+
+Swagger документация: ```localhost:8000/swagger```
+
+Redoc документация: ```localhost:8000/redoc```
 
 ## Тестирование
 
@@ -93,4 +97,35 @@ docker compose --profile test up --build
 
 ## Структура проекта
 
-Тут будет вывод ```tree .``` с комментариями...
+```sh
+em-jan-cafe
+├── cafe_manager
+│   ├── cafe_manager
+│   │   ├── asgi.py
+│   │   ├── __init__.py
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   ├── manage.py
+│   ├── orders          # Основное приложение orders
+│   │   ├── admin.py    
+│   │   ├── api         # API views, маршруты, сериализаторы, рендеры и пр.
+│   │   ├── apps.py
+│   │   ├── fixtures    # Фикстуры (example_dishes.json с примерами блюд)
+│   │   ├── __init__.py
+│   │   ├── migrations  
+│   │   ├── models.py   # Модели Order, Dish, DishOrder
+│   │   ├── services.py # Сервисный слой между Django ORM и представлением (переиспользуется в WI и API views)
+│   │   ├── templates   
+│   │   ├── tests       # Тесты сервиса и API эндпоинтов
+│   │   ├── urls.py     # Основные маршруты веб-интерфейса и подключение API маршрутов
+│   │   └── views.py    # WI views
+│   └── static
+│       └── css
+├── docker-compose.yml  
+├── Dockerfile
+├── poetry.lock
+├── pyproject.toml
+├── README.md
+└── requirements.txt
+```
