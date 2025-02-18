@@ -11,15 +11,31 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 import dj_database_url
 from dotenv import load_dotenv
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+PROJECT_ROOT = BASE_DIR.parent
+
+env_file = PROJECT_ROOT / ".env"
+
+if not env_file.exists():
+    print(
+        f"""
+    Error: .env file not found. Please create a .env file in the project root.
+    [Missing: {env_file}]
+    """
+    )
+    sys.exit(1)
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 DATABASES = {"default": dj_database_url.config(default="sqlite:///db.sqlite3")}
 
@@ -28,6 +44,13 @@ DATABASES = {"default": dj_database_url.config(default="sqlite:///db.sqlite3")}
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    print(
+        """
+    Error: SECRET_KEY not found in .env file. Please use .env.example as a reference.
+    """
+    )
+    sys.exit(1)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "1"
