@@ -3,6 +3,8 @@ from functools import wraps
 from typing import Callable
 
 from django.core.paginator import Paginator
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,6 +16,11 @@ from orders.services import (ConstraintError, OrderService, OrderServiceError,
 from .serializers import (CreateOrderSerializer, ListQueryParamsSerializer,
                           OrderSerializer, StatusSerializer,
                           WrappedDishSerializer)
+from .swagger_schemas import (BAD_REQUEST_RESPONSE, NOT_FOUND_RESPONSE,
+                              ORDER_CREATE_RESPONSE, ORDER_DELETE_RESPONSE,
+                              ORDER_DETAIL_RESPONSE, ORDER_LIST_RESPONSE,
+                              ORDER_STATUS_UPDATE_RESPONSE, REVENUE_RESPONSE,
+                              VALIDATION_ERROR_RESPONSE)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +51,32 @@ def protective_call(
         return wrapper
 
     return decorator
+
+
+def handle_service_search_error(wrapper):
+    """
+    Decorator to handle SearchError exceptions and return a 404 response.
+
+    Args:
+        wrapper: The function to wrap.
+
+    Returns:
+        Callable: A decorated function that handles SearchError.
+    """
+    return protective_call(not_found_error_response, SearchError)(wrapper)
+
+
+def handle_service_constraint_error(wrapper):
+    """
+    Decorator to handle ConstraintError exceptions and return a 400 response.
+
+    Args:
+        wrapper: The function to wrap.
+
+    Returns:
+        Callable: A decorated function that handles ConstraintError.
+    """
+    return protective_call(bad_request_error_response, ConstraintError)(wrapper)
 
 
 def not_found_error_response(e: OrderServiceError) -> Response:
@@ -94,37 +127,47 @@ def validation_error_response(serializer) -> Response:
     )
 
 
-def handle_service_search_error(wrapper):
-    """
-    Decorator to handle SearchError exceptions and return a 404 response.
-
-    Args:
-        wrapper: The function to wrap.
-
-    Returns:
-        Callable: A decorated function that handles SearchError.
-    """
-    return protective_call(not_found_error_response, SearchError)(wrapper)
-
-
-def handle_service_constraint_error(wrapper):
-    """
-    Decorator to handle ConstraintError exceptions and return a 400 response.
-
-    Args:
-        wrapper: The function to wrap.
-
-    Returns:
-        Callable: A decorated function that handles ConstraintError.
-    """
-    return protective_call(bad_request_error_response, ConstraintError)(wrapper)
-
-
 class OrderView(APIView):
-    """
-    API View for handling order-related operations such as listing and creating orders.
-    """
 
+    @swagger_auto_schema(
+        operation_description="Retrieve a paginated list of orders.",
+        manual_parameters=[
+            openapi.Parameter(
+                "pagesize",
+                openapi.IN_QUERY,
+                description="Number of orders per page",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "table_number",
+                openapi.IN_QUERY,
+                description="Filter by table number",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "status",
+                openapi.IN_QUERY,
+                description="Filter by order status",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "id",
+                openapi.IN_QUERY,
+                description="Filter by order ID",
+                type=openapi.TYPE_INTEGER,
+            ),
+        ],
+        responses={
+            200: ORDER_LIST_RESPONSE,
+            422: VALIDATION_ERROR_RESPONSE,
+        },
+    )
     def get(self, request: Request) -> Response:
         """
         Retrieve a paginated list of orders based on query parameters.
@@ -163,6 +206,15 @@ class OrderView(APIView):
             status=status.HTTP_200_OK,
         )
 
+    @swagger_auto_schema(
+        operation_description="Create a new order.",
+        request_body=CreateOrderSerializer,
+        responses={
+            201: ORDER_CREATE_RESPONSE,
+            400: BAD_REQUEST_RESPONSE,
+            422: VALIDATION_ERROR_RESPONSE,
+        },
+    )
     @handle_service_constraint_error
     def post(self, request: Request) -> Response:
         """
@@ -188,10 +240,14 @@ class OrderView(APIView):
 
 
 class OrderIdView(APIView):
-    """
-    API View for handling operations on a specific order by its ID.
-    """
 
+    @swagger_auto_schema(
+        operation_description="Retrieve details of a specific order.",
+        responses={
+            200: ORDER_DETAIL_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @handle_service_search_error
     def get(self, _, order_id: int) -> Response:
         """
@@ -208,6 +264,10 @@ class OrderIdView(APIView):
         logger.info("Retrieved order with ID %d", order_id)
         return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+        operation_description="Delete an order.",
+        responses={204: ORDER_DELETE_RESPONSE, 404: NOT_FOUND_RESPONSE},
+    )
     @handle_service_search_error
     def delete(self, _, order_id: int) -> Response:
         """
@@ -226,10 +286,17 @@ class OrderIdView(APIView):
 
 
 class OrderIdStatusView(APIView):
-    """
-    API View for updating the status of a specific order by its ID.
-    """
 
+    @swagger_auto_schema(
+        operation_description="Update the status of an order.",
+        request_body=StatusSerializer,
+        responses={
+            200: openapi.Response("Order updated", OrderSerializer),
+            400: BAD_REQUEST_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            422: VALIDATION_ERROR_RESPONSE,
+        },
+    )
     @handle_service_search_error
     @handle_service_constraint_error
     def patch(self, request: Request, order_id: int) -> Response:
@@ -259,10 +326,17 @@ class OrderIdStatusView(APIView):
 
 
 class OrderIdDishesView(APIView):
-    """
-    API View for updating the dishes of a specific order by its ID.
-    """
 
+    @swagger_auto_schema(
+        operation_description="Update the dishes of an order.",
+        request_body=WrappedDishSerializer,
+        responses={
+            200: openapi.Response("Order updated", OrderSerializer),
+            400: BAD_REQUEST_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            422: VALIDATION_ERROR_RESPONSE,
+        },
+    )
     @handle_service_search_error
     @handle_service_constraint_error
     def patch(self, request: Request, order_id: int) -> Response:
@@ -292,10 +366,11 @@ class OrderIdDishesView(APIView):
 
 
 class RevenueView(APIView):
-    """
-    API View for retrieving revenue information.
-    """
 
+    @swagger_auto_schema(
+        operation_description="Retrieve the total revenue.",
+        responses={200: REVENUE_RESPONSE},
+    )
     def get(self, _) -> Response:
         """
         Retrieve the total revenue.

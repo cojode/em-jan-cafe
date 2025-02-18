@@ -12,8 +12,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+
 import dj_database_url
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -137,4 +138,8 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "orders.api.renderers.CustomRenderer",
     ],
+}
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {"Basic": {"type": "basic"}},
 }

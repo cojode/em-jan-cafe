@@ -57,9 +57,7 @@ def _process_dishes(request):
         if qty.isdigit() and int(qty) > 0
     ]
     if not dishes:
-        raise ValidationError(
-            "Выберите хотя бы одно блюдо с количеством больше 0"
-        )
+        raise ValidationError("Выберите хотя бы одно блюдо с количеством больше 0")
     return dishes
 
 
@@ -84,9 +82,7 @@ def order_create(request):
                 "order_create.html",
                 {"dishes": DishService.all_dishes(), "error": str(e)},
             )
-    return render(
-        request, "order_create.html", {"dishes": DishService.all_dishes()}
-    )
+    return render(request, "order_create.html", {"dishes": DishService.all_dishes()})
 
 
 def order_edit(request, order_id):
